@@ -1,0 +1,353 @@
+---
+title: "Databehandling: Stabilitet af acetylsalicylsyre (ASA)"
+author: "Sebastian Jakobsen"
+date: today
+lang: da
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    code-overflow: wrap
+    theme: cosmo
+    embed-resources: true
+execute:
+  echo: true
+  warning: false
+  message: false
+  eval: false
+---
+
+# Introduktion {.unnumbered}
+
+Dette dokument guider dig igennem dataanalysen for stabilitetsforsøget med acetylsalicylsyre (ASA) i **R**. ASA nedbrydes i vandig opløsning til salicylsyre (SA) og eddikesyre. Ved forhøjet temperatur (temperaturaccelereret forsøg) følges nedbrydningen spektrofotometrisk, og fra disse data vil vi:
+
+1.  Indlæse data for alle fire forsøgstemperaturer (55, 60, 65 og 70 °C)
+2.  Beregne den initiale ASA-koncentration og den teoretiske absorbans ved fuld omdannelse ($A_\infty$)
+3.  Transformere data ($\ln(A_\infty - A_t)$) så pseudo-1.ordens-kinetikken bliver lineær
+4.  Lave en lineær regression **for hver temperatur** for at bestemme hastighedskonstanten $k$
+5.  Samle de fire $k$-værdier og lave et **Arrhenius-plot** ($\ln k$ mod $1/T$)
+6.  Bestemme aktiveringsenergien $E_a$ og ekstrapolere $k$ til 20 °C, 25 °C og 37 °C
+7.  Beregne holdbarheden ($t_{5\%}$) ved disse temperaturer
+
+
+------------------------------------------------------------------------
+
+# Baggrund
+
+ASA nedbrydes til SA ved pseudo-1.ordens-kinetik:
+
+$$-\frac{d[\text{ASA}]}{dt} = k[\text{ASA}]$$ {#eq-rate}
+
+hvilket ved integration giver:
+
+$$\ln[\text{ASA}]_t = \ln[\text{ASA}]_0 - kt$$ {#eq-integrated}
+
+Da ASA og SA absorberer UV forskelligt, kan koncentrationen af SA følges direkte ved 303 nm (ved pH 1, hvor ASA's bidrag til absorbansen ved denne bølgelængde er ca. 0). Fordi $[\text{ASA}]_0$ (start) svarer til $[\text{SA}]_{t=\infty}$ (fuld omdannelse), kan @eq-integrated omskrives til en form, der bruger de **målte absorbanser** direkte:
+
+$$\ln(A^{SA}_{t=\infty} - A^{SA}_{t=t}) = \ln(A^{SA}_{t=\infty} - A^{SA}_{t=0}) - kt$$ {#eq-linearized}
+
+Dvs. at $-k$ er **hældningen**, hvis I plotter $\ln(A^{SA}_{t=\infty} - A^{SA}_{t=t})$ som funktion af $t$. $A^{SA}_{t=\infty}$ beregnes teoretisk ud fra den initiale ASA-koncentration og den molære ekstinktionskoefficient (Lambert-Beers lov, $A = \varepsilon \cdot c \cdot l$, hvor $l = 1$ cm). Relevante værdier findes i øvelsesvejledningen.
+
+Forsøget er lavet ved fire temperaturer (55, 60, 65 og 70 °C), med hver sit sæt prøvetagningstidspunkter (se øvelsesvejledningens Tabel 3.2). To grupper deler arbejdet (to temperaturer hver) og udveksler data.
+
+**Foreslået datastruktur** — saml jeres data i én fil (`øvelse3_data.xlsx`) med kolonnerne:
+
+-   `temp_C` — forsøgstemperatur (anvend gennemsnittet af jeres målte tempereturer ved start og slut)
+-   `tid_min` — prøvetagningstidspunkt i minutter
+-   `A303` — målt absorbans ved 303 nm
+-   `A280` — målt absorbans ved 280 nm
+
+------------------------------------------------------------------------
+
+# Opsætning
+
+## Indlæs relevante pakker
+
+```{r}
+library(tidyverse)
+library(readxl)
+```
+
+> Husk at installere pakker med `install.packages()`, hvis dette ikke tidligere er gjort.
+
+## Eksperimentelle parametre og konstanter
+
+Definér de konstanter og eksperimentelle parametre, I skal bruge. Brug jeres egne afvejede/udtagne værdier fra øvelsen.
+
+```{r}
+MW_ASA    <- ____   # ASA molekylvægt, g/mol
+MW_SA     <- ____   # SA molekylvægt, g/mol
+eps_SA    <- ____   # den relevante ekstinktionskoefficient for SA, L/(mol*cm)
+
+m_ASA     <- ____    # jeres afvejede masse ASA, mg
+V_stam    <- ____    # volumen ethanol-stamopløsning, mL
+V_udtag   <- ____    # volumen overført fra stamopløsning til saltsyren, mL
+V_reak    <- ____    # toal volumen i reaktionsblandingen med 0,1 M saltsyre, mL
+
+R_gas     <- 8.314   # J/(mol*K), gaskonstanten
+```
+
+## Indlæs data
+
+Gem den samlede excel-fil (`øvelse3_data.xlsx`) i jeres projektmappe og importér med `read_excel()`.
+
+```{r}
+data <- ____ # importer data
+```
+
+> Tjek at data indeholder observationer for alle fire temperaturer (55, 60, 65 og 70 °C).
+
+------------------------------------------------------------------------
+
+# Databehandling
+
+## Initial ASA-koncentration i reaktionsblandingen
+
+Brug fortyndingsprincippet ($c_1 V_1 = c_2 V_2$) til at gå fra den afvejede masse til koncentrationen af ASA i reaktionsblandingen (som ved $t=0$ svarer til $[\text{ASA}]_0$).
+
+```{r}
+n_ASA_stock <- ____   # mol ASA i stamopløsningen
+C_stock     <- ____   # mol/L, koncentration af stamopløsningen
+
+ASA_0       <- ____   # mol/L, koncentration af ASA i reaktionsblandingen ved t = 0
+```
+
+## Teoretisk absorbans ved fuld omdannelse ($A^{SA}_{t=\infty}$)
+
+Ved $t = \infty$ er al ASA omdannet til SA, så $[\text{SA}]_{t=\infty} = [\text{ASA}]_0$. Brug Lambert-Beers lov til at beregne den tilsvarende absorbans ved 303 nm.
+
+```{r}
+A_inf <- ____ 
+```
+
+## Linearisér data (per måling)
+
+Tilføj en kolonne, der beregner $\ln(A^{SA}_{t=\infty} - A^{SA}_{t=t})$ for hver måling i datasættet. Brug `mutate()` og den naturlige logaritme-funktion `log()`.
+
+```{r}
+data <- data %>%
+  mutate(
+    y = ____   # ln(A_inf - A_t)
+  )
+```
+
+## Lineær regression — hastighedskonstant $k$ for hver temperatur
+
+I stedet for at filtrere og fitte én temperatur ad gangen, kan `group_by()` kombineret med `summarise()` fitte en separat `lm()`-model for hver af de fire temperaturer i ét trin.
+
+Udfordringen er, at `lm()` normalt forventer en navngivet dataframe via `data = ...`. Inde i `summarise()` findes der ikke én — I arbejder jer igennem data gruppe for gruppe, ikke ud fra en eksisterende tabel. `pick(everything())` løser det: den samler den aktuelle gruppes kolonner til en lille dataframe på stedet, så `lm()` har noget at fitte til. Fordi `lm()` returnerer et helt modelobjekt frem for et enkelt tal, pakkes det ind i `list()`, så det kan gemmes i én tabelcelle.
+
+```{r}
+k_per_temp <- data %>%
+  group_by(____) %>%
+  summarise(
+    model = list(lm(____ ~ ____, data = pick(everything()))),
+
+    # Træk skæring, hældning og R² ud af modellen for denne temperatur
+    skæring = coef(model[[1]])[[1]],
+    hældning = ____,
+    k        = ____,   # husk rigtigt fortegn!
+    R2       = ____
+  ) %>%
+  select(-model) %>%    # fjerner model-kolonnen, da den kun var nødvendig for at få tallene ovenfor
+  ungroup()
+```
+
+> **Hint:** `model` er en liste med ét modelobjekt i — selv når der kun er ét element, skal I bruge **dobbelt** klammeparentes, `model[[1]]`, for at pakke selve modellen ud af listen (enkelt klamme, `model[1]`, giver jer en liste med ét element i, ikke modellen selv). Herfra er det samme `coef()` og `summary()`, I allerede kender:
+>
+> -   `coef(model[[1]])[[1]]` — skæring
+> -   `coef(model[[1]])[[2]]` — hældning
+> -   `summary(model[[1]])$r.squared` — R²
+>
+> Læs evt. mere om lineær regression og se et lignende eksempel [her](https://cpdse-edux.github.io/R_documentation/topics/linear-regression.html).
+
+## Plot: Reaktionskinetik ved de fire temperaturer
+
+I rapporten skal i plotte de lineariserede data som funktion af tid for alle fire temperaturer samtidig med tilhørende regressionslinjer. 
+
+Brug `ggplot()` med `geom_point()` og `geom_smooth()` (for regressionslinje), og farvelæg punkterne efter temperatur ved at sætte `color = as.factor(temp_C)` inde i `aes()`. Da `temp_C` er numerisk, skal den konverteres til en faktor (`as.factor()`) for at blive farvelagt som fire adskilte grupper i stedet for en kontinuerlig farveskala. Husk at beskrive regressionsforskrifterne og R^2^-værdier i figurteksten.
+
+```{r}
+ggplot(____, aes(x = ____, y = ____, color = ____)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) + # tilføjer regressionslinje
+  labs(
+    x = "____",                # x-aksetitel
+    y = "____",                # y-aksetitel
+    color = "____"             # farveforklaring
+  ) + 
+  theme_classic()
+
+# tilføj gerne flere elementer for at formatere jeres plot (se tips nederst i guiden)
+```
+
+> **Opgave:** Er sammenhængen mellem $y$ og tid tilnærmelsesvis lineær ved alle fire temperaturer? Ser i en klar sammenhæng mellem linjernes hældning og temperaturen?
+
+## Forbered data til Arrhenius-plottet
+
+`k_per_temp` indeholder allerede `temp_C` og `k` for alle fire temperaturer — I skal blot tilføje kolonner for temperatur i Kelvin, $1/T$ og $\ln k$ oveni.
+
+```{r}
+k_per_temp <- k_per_temp %>%
+  mutate(
+    # tilføj de nødvendige kolonner med tilhørende udregninger
+  )
+```
+
+> **OBS**: Husk at I skal bruge de gennemsnitlige temperaturer i målte under forsøget til jeres Arrhenius data.  
+
+------------------------------------------------------------------------
+
+## Lineær regression (Arrhenius-ligningen)
+
+Ifølge Arrhenius-ligningen er $\ln k = \ln A - \dfrac{E_a}{R}\cdot\dfrac{1}{T}$. Ud fra denne ligning laves der en lineær regression ved brug af `lm()`. Ud fra dette kan relevante værdier som aktiveringsenergien $E_a$ og frekvensfaktoren $A$. Husk igen at gemme relevante informationer om jeres regression (forskrift, R^2^) til jeres plot
+
+```{r}
+fit_arr <- lm(____)
+
+Ea     <- ____   # J/mol 
+A_freq <- ____   # frekvensfaktoren, min^-1
+```
+
+> **Opgave:** Hvad er aktiveringsenergien ($E_a$) for nedbrydningen af ASA, i kJ/mol?
+
+------------------------------------------------------------------------
+
+## Arrhenius plot
+
+I rapporten skal i lave et Arrhenius plot, der viser ovenstående regression. Husk at I altid kan tilføje flere lag og argumenter for at formatere jeres plot (se tips). 
+
+```{r}
+ggplot(____, aes(x = ____, y = ____)) +
+  geom_smooth(method = "lm", se = FALSE) +
+  geom_point() +
+  labs(
+    x = "____", 
+    y = "____"
+    ) +
+  theme_classic()
+```
+
+## Ekstrapolation til andre temperaturer
+
+Saml de ønskede temperaturer (20 °C, 25 °C og 37 °C) i én `tibble()`, og brug `mutate()` til at beregne $k$ ved disse temperaturer.
+
+```{r}
+nye_temp <- tibble(
+  temp_C = c(____)
+) %>%
+  mutate(
+    ____   # tilføj de kolonner, I har brug for, for at komme fra temp_C til k
+  )
+```
+
+> **Hint:** I kan enten indsætte jeres temperaturer direkte i Arrhenius-ligningen (med `Ea` og `A_freq`), eller bruge `predict()` på `fit_arr` (læs evt. mere [her](https://cpdse-edux.github.io/R_documentation/functions/predict.html)). Bruger I `predict()`, skal I kalde `mutate()` to gange — 1/T skal være beregnet og gemt i tibblen, *før* `predict()` kan bruge den, så den kan ikke oprettes og bruges i samme `mutate()`-kald. Husk under alle omstændigheder at omregne til Kelvin først, og at transformere tilbage fra $\ln k$ til $k$.
+
+------------------------------------------------------------------------
+
+## Shelf life/Holdbarhed ($t_{5\%}$)
+
+Ved pseudo-1.ordens-kinetik (@eq-integrated) kan tidspunktet, hvor 5 % af ASA er nedbrudt ($[\text{ASA}]_t/[\text{ASA}]_0 = 0{,}95$), findes som:
+
+$$t_{5\%} = \frac{-\ln(0{,}95)}{k}$$ {#eq-t5}
+
+Tilføj holdbarheden som en ny kolonne i `nye_temp`, så I får $k$ og $t_{5\%}$ for alle tre temperaturer samlet i én tabel.
+
+```{r}
+nye_temp <- nye_temp %>%
+  mutate(
+    t5_min = ____   # min
+  )
+
+```
+
+> **Opgave:** Hvad er holdbarheden ved de forskellige temperaturer (omregnet til en passende tidsenhed)?
+
+# Tips til formatering af jeres plots
+
+Her er nogle valgfrie tips til at gøre jeres figurer mere læsevenlige og professionelle.
+
+## Punktstørrelse
+
+Standardstørrelsen på punkter i `geom_point()` er ofte lidt lille til en rapportfigur. Justér med `size` (prøv jer frem med forskellige tal):
+
+```{r}
+geom_point(size = ____)
+```
+
+## Generel tekststørrelse
+
+De fleste temaer (fx `theme_classic()`) tager et `base_size`-argument, der skalerer al tekst i figuren (akse-titler, forklaring, osv.) på én gang:
+
+```{r}
+theme_classic(base_size = ____)
+```
+
+## Matematik i akse-titler
+
+Almindelig tekst i `labs()` kan ikke vise brøker, subscripts eller symboler som ∞ korrekt. Brug i stedet `expression()`:
+
+```{r}
+labs(y = expression(ln(A[infinity]-A[t]))) # Giver "ln(A∞-At)" som y-aksetitel
+```
+
+Nogle byggeklodser, I kan sætte sammen inde i `expression()`:
+
+-   `x^{tal}` laver en superscript (hævet skrift), fx `cm^{2}` → cm².
+-   `x[tal]` laver en subscript (sænket skrift), fx `A[t]` → A_t.
+-   `infinity` tegner symbolet ∞ 
+-   `frac(a, b)` tegner en rigtig brøk, fx `frac(dC, dt)` → $\frac{dC}{dt}$.
+-   Græske bogstaver skrives ved deres engelske navn, fx `alpha`, `beta`, `mu` → α, β, µ.
+-   `~` indsætter et lille mellemrum mellem delene (brug `*` i stedet, hvis I ikke ønsker mellemrum).
+-   Almindelig tekst skal stå i anførselstegn — alt andet kan fortolkes som matematiske symboler/variabelnavne.
+
+## Juster akse-grænser
+
+Sæt `limits` for at fastlåse akserne, og `expand = c(0, 0)` for at fjerne det automatiske "luft-mellemrum", ggplot ellers tilføjer omkring data. 
+
+```{r}
+scale_x_continuous(limits = c(____, ____), expand = c(0, 0)) +
+scale_y_continuous(limits = c(____, ____), expand = c(0, 0))
+```
+
+> **OBS:** Med `expand = c(0, 0)` vil punkter, der ligger helt ude i et hjørne, ofte blive halvt beskåret af figurens kant. Tilføj `coord_cartesian(clip = "off")`, hvis det sker.
+
+## Regressionslinjer, der rækker ud over datapunkterne
+
+`geom_smooth()` tegner som standard kun linjen mellem det laveste og højeste datapunkt. `fullrange = TRUE` beder den i stedet om at række ud over hele akse-**skalaens** område:
+
+```{r}
+geom_smooth(method = "lm", se = FALSE, fullrange = TRUE)
+```
+
+## Form og farve sammen — kombinér til én forklaring
+
+`shape` fungerer ligesom `color`, men giver hver gruppe sin egen punktform (cirkel, trekant, kryds) i stedet for en farve — nyttigt for farveblinde læsere, og fordi farver ofte forsvinder ved sort/hvid-print. Tilføjes samme sted som `color`, inde i `aes()`.
+
+Hvis I farvelægger og formgiver punkterne efter **samme** variabel, samler ggplot automatisk de to forklaringer i én, i stedet for at vise to separate — det gør figuren mindre rodet og lettere at læse:
+
+```{r}
+ggplot(data, aes(x = ____, y = ____, color = as.factor(____), shape = as.factor(____))) +
+  geom_point() +
+  labs(color = "____", shape = "____")   # samme titel begge steder -> slås sammen
+```
+
+> **OBS:** Titlen i `labs()` skal være identisk for `color` og `shape` (bogstaveligt samme tekststreng), ellers forbliver de to forklaringer adskilte.
+
+## Valg af farvepalet
+
+ggplots standardfarver er ikke altid lette at skelne fra hinanden — særligt for farveblinde læsere. `scale_color_*()` lader jer nemt bytte hele paletten ud, uden at ændre resten af koden, fx:
+
+```{r}
+scale_color_viridis_d()
+```
+
+`viridis_d()` ("d" for *diskret*, dvs. til diskrete grupper (modsat kontinuerlige)) er designet til at være letlæselig for farveblinde og bevarer sin kontrast selv i sort/hvid-print — et godt standardvalg.
+
+Et par alternativer, I også kan støde på:
+
+-   `scale_color_brewer(palette = "Set2")` — et sæt håndplukkede, adskillelige farver fra [ColorBrewer](https://colorbrewer2.org/); flere paletter at vælge imellem (`"Set1"`, `"Dark2"`, osv.).
+-   `scale_color_manual(values = c(____, ____, ____, ____))` — vælg jeres egne farver manuelt (fx `"steelblue"`, `"#E69F00"`), hvis I har et bestemt udseende i tankerne.
+
+> **OBS:** Har I brugt `fill` i stedet for `color` i `aes()` (fx til søjlediagrammer), hedder den tilsvarende funktion `scale_fill_viridis_d()`/`scale_fill_brewer()` — samme idé, blot for `fill`-æstetikken.

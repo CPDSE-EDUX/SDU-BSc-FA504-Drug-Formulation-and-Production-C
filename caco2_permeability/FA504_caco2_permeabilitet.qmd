@@ -1,0 +1,257 @@
+---
+title: "Bestemmelse af permeabilitetskoefficienten (P~app~) over Caco-2 cellemonolag"
+lang: da 
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    code-overflow: wrap
+    theme: cosmo
+    embed-resources: true
+execute:
+  echo: true
+  warning: false
+  message: false
+  eval: false
+---
+# Introduktion {.unnumbered}
+
+Dette dokument guider dig igennem dataanalysen for et **Caco-2 permeabilitetsassay**. Caco-2-cellelaget er en udbredt *in vitro*-model for lægemiddelstoftransport over mave-tarm epitelet og bruges til at estimere oral absorption.
+
+I dette forsøg tilsættes lægemiddelstofkandidaten **X** til den **apikale (donor)** side, og koncentrationen på den **basolaterale (receiver)** side måles over tid. Fra disse data vil vi:
+
+1.  Indlæse de eksperimentelle data
+2.  Beregne den kumulative mængde af **X**, der er transporteret, med korrektion for prøveudtagning
+3.  Kontrollere om sink-betingelser var opretholdt
+4.  Beregne flux ved hvert tidsinterval
+5.  Plotte kumulativ transport mod tid og identificere steady-state-området
+6.  Tilpasse en lineær model til steady-state-data for at bestemme flux og lag-tid
+7.  Beregne permeabilitetskoefficienten *P~app~*
+
+## Relevans og perspektiver{.unnumbered}
+
+Denne dataanalyse bygger på bl.a. på lineær regression, samt andre relevante framgangsmåder I vil møde gentagne gange:
+
+- I har tidligere arbejdet med en tilsvarende fremgangsmåde ved analyse af dissolutionforsøg (FA503)
+- Labøvelse 2 (*In vitro afgivelse af nikotinsyreestre fra forskellige salvegrundlag*) har samme analytiske tilgang og R-arbejdsgang, men regression mod √t (Higuchi-kinetik)
+- Labøvelse 3 (*Stabilitet af acetylsalicylsyre*) bygger på lineær regression på ln-transformerede data til 1. ordens kinetik og Arrhenius-plot
+
+Det R-script I arbejder med her er med andre ord en skabelon for kvantitativ dataanalyse, som I vil genbruge i flere sammenhænge.
+
+Derudover er *P~app~* en central parameter i lægemiddeludvikling og -klassificering:
+
+- Caco-2-modellen er industristandarden for *in vitro*-permeabilitetsmålinger og anvendes rutinemæssigt som tidligt screeningsværktøj i både akademisk forskning og den farmaceutiske industri.
+
+------------------------------------------------------------------------
+
+# Baggrund
+
+Transportforsøg foregår i brønde med celler udsået på en permeabel membran, se @fig-caco2.
+
+![Transwellsystem med Caco-2 celler. Øverste kammer er apikalt og nederste basolateralt. Apikal volumen = 0,5 ml, Basolateral volumen = 1,0 ml. Prøvevolumen, receiver prøve (basolateral) = 100 μl. Prøvevolumen, donor opløsning (apical) = 20 μl. Areal = 1,12 cm^2^.](caco2.png){#fig-caco2 width=40%}
+
+Apikal til basolateral (equivalent til lumen-blod) flux, J^l-b^, for en lægemiddelstofkandidat, **X**, er undersøgt ved transportstudier over 21 dage gamle Caco-2 celle monolag, som vist i @fig-caco2. **X** er blevet tilsat til den apikale (luminale) side i en koncentration på **50 mM**. Der er udtaget prøver på acceptor (receiver) siden hvert 15 min, og mængden af **X** er blevet bestemt. Til start og slut er der udtaget en prøve fra donoropløsningen som er blevet kvantificeret for indholdet af **X** (50 mM ved start, 48 mM ved slut). Data kan findes i filen `caco2_data.xlsx`.
+
+**Eksperimentalle parametre:** Forsøget er lavet med omrøring. Apikal volumen = 0,5 ml. Basolateral volumen = 1,0 ml. Prøve volumen, receiver opløsning (basolateral) = 100 μl. Prøve volumen, donor opløsning (apical) = 20 μl. Areal af Caco-2 cellemonolag = 1,12 cm^2^. Donorprøver er ikke erstattet med ny opløsning, men prøver udtaget på receiver siden er blevet erstattet med frisk buffer som ikke indeholder **X**, hvormed volumen i systemet er konstante over forsøget.
+
+# Opsætning
+
+## Indlæs relevante pakker
+
+```{r}
+library(tidyverse)
+library(readxl)
+
+```
+> Husk at installere pakker med `install.packages()`, hvis dette ikke tidligere er gjort.
+
+## Eksperimentelle parametre
+
+Definer de eksperimentelle parametre.
+
+```{r}
+V_d   <- ___    # Donor (apikal) volumen, mL
+V_r   <- ___    # Receiver (basolateral) volumen, mL
+V_s   <- ___    # Prøvevolumen udtaget fra receiver ved hvert tidspunkt, mL
+C_0   <- ___    # Initial donorkoncentration, mM
+areal <- ___    # Overfladeareal, cm²
+```
+
+## Indlæs data
+
+Gem excel-filen `caco2_data.xlsx` med data i din projektmappe. Filen skal have to kolonner:
+
+-   `tid_min` — prøvetagningstidspunkt i minutter
+-   `C_mM` — målt koncentration i receiver-kammeret på det pågældende tidspunkt (mM)
+
+Importér derefter data i *R* ved brug af `read_excel()` (se evt. mere [her](https://readxl.tidyverse.org/)).
+
+```{r}
+data <- ___ # importer data
+```
+
+> Tjek at data er indlæst korrekt.
+
+------------------------------------------------------------------------
+
+# Databehandling
+
+## Mængde i hver receiver-prøve
+
+Ved hvert tidspunkt udtages en prøve med volumen $V_s$ fra receiver-kammeret. Brug `mutate()` funktionen til at oprette en kolonne (`n_sample_nmol`) i dit dataframe, der udregner mængden af **X** i hver prøve (i nmol). Husk, at `mutate()` funktionen bruges ved at refere til kolonnenavne og variabelnavne, for automatisk at udregne værdier for hver række (læs evt. mere om `mutate()`: [her](https://cpdse-edux.github.io/R_documentation/functions/mutate.html) eller [her](https://dplyr.tidyverse.org/reference/mutate.html)).
+
+```{r}
+data <- data %>%
+  mutate(
+    n_sample_nmol = ____   # nmol af X i de udtagne prøver
+  )
+```
+
+## Kumulativ transporteret mængde — korrektion for prøveudtagning
+
+For at bestemme den totale mængde af **X**, som er transporteret over Caco-2 cellelaget, skal der tages højde for de udtagne prøver, som efterfølgende erstates af ren buffer. Dvs. at volumenet i receiverkammeret (`V_r`) forbliver konstant, men en større og større mængde af **X** bliver fjernet fra systemet i form af de udtagne prøver. Altså udgøres den totale mængde af transportet **X**, til et givent tidspunkt, af både mængden af **X** i receiveerkammeret + den kumulative sum af **X** i de forrige prøver:
+
+$$n_{total,t} = C_{t} \cdot V_r  + \sum_{i<t} n_{sample,i}$$
+
+Hvor $C_t$ er koncentrationen af **X** i receiverkammeret til tiden $t$, $V_r$ er volumenet i receiverkammeret, og $n_{sample,i}$ er mængden af X i prøverne udtaget før tiden $t$. Brug igen `mutate()` til at udregne disse værdier for alle tidspunkter i en ny kolonne `n_total_nmol`. Det er en fordel at bruge `cumsum()` og `lag()` funktionen (se evt. dissolution databehandling fra FA503). Husk at omregne til nmol!
+
+```{r}
+# Tilføj en ny kolonne (n_total_nmol) til dit dataframe vha. mutate, med den totale mængde X transporteret til hvert tidspunkt
+
+
+```
+
+## Flux ved hvert tidsinterval
+
+Fluxen $J$ i hvert interval kan beregnes som forskellen af mængden af **X** transporteret divideret med tidsintervallet og arealet:
+
+$$J_i = \frac{n_{total,i} - n_{total,i-1}}{(t_i - t_{i-1}) \cdot A} \quad \left[\frac{\text{nmol}}{\text{min} \cdot \text{cm}^2 }\right]$$
+
+Tilføj endnu en kolonne (`flux`) til dit dataframe, hvor du udregner fluxen (i $\frac{\text{nmol}}{\text{min} \cdot \text{cm}^2}$) i hvert interval vha. `mutate()`. Husk igen, at `lag()` funktionen kan bruges til at returnere værdien fra den foregående række i en kolonne (f.eks. giver `lag(n_total_nmol)` $n_{total,i-1}$).
+
+```{r}
+# Skriv din egen kode til at beregne flux som en ny kolonne vha. mutate
+
+```
+
+------------------------------------------------------------------------
+
+# Kontrol af sink-conditions
+
+Bestem den %-del af **X**, som er blevet transporteret over Caco-2 cellelaget ved slutningen af forsøget.
+
+**Hint**: I `tidyverse` pakken kan du bruge `last()` funktionen til at få den sidste værdi i en kolonne/vektor.
+
+```{r}
+pct_transporteret  <- ____   # procent X transporteret ved slut
+```
+
+> **Opgave:** Hvor stor en %-del af **X** er transporteret? Lever dette op til *sink conditions*?
+
+------------------------------------------------------------------------
+
+# Plot: Kumulativ transport mod tid
+
+Plot den totale mængde **X** transporteret som funktion af tid.
+
+**Hint**: brug `ggplot()` og `geom_point()`.
+
+```{r}
+# udfyld blanke og tilføj egen kode for evt. at tilføje aksetitler etc. 
+ggplot(____, aes(x = ____, y = ____)) +
+_____ 
+```
+
+> **Opgave:** Inspicér plottet. Ved hvilket tidspunkt bliver kurven tilnærmelsesvis lineær? Vælg de tidspunkter, der repræsenterer steady-state-transport, og brug dem i næste afsnit.
+
+------------------------------------------------------------------------
+
+# Steady-state-analyse
+
+## Udvælg steady-state-data
+
+Baseret på visuel inspektion filtreres data til kun at inkludere steady-state-området og gemmes som en ny dataframe `ss_data`. Funktionen `filter()` kan bruges til at udvælge rækker i en dataframe, der opfylder et bestemt betingelse (se evt. mere [her](https://dplyr.tidyverse.org/reference/filter.html)).
+
+```{r}
+ss_data <- data %>% 
+  filter(____)
+```
+
+Inspicer evt. den nye dataframe for at sikre, at de rigtige rækker er blevet filtreret.
+
+## Lineær regression
+
+Vi bruger `lm()` til at tilpasse en ret linje til steady-state-data. Funktionen tager en **formel** på formen `y ~ x` samt et `data`-argument (læs mere [her](https://www.geeksforgeeks.org/r-language/how-to-use-lm-function-in-r-to-fit-linear-models/)). I `lm()` bruges `~` til at adskille den variabel, du vil forudsige (afhængige variabel), fra den/de variabler, du bruger til at forudsige den med (uafhængige variabel). Kort sagt betyder `~`: "er en funktion af".
+
+```{r}
+fit <- lm(____ ~ ____, data = _____)
+summary(fit)
+```
+
+`summary()` giver et overblik over fittet (bl.a. skæring, hældning og $R^2$)
+
+Udtræk skæringspunkt og hældning med `coef()`:
+
+-   `coef(fit)[[1]]` — **skæringspunktet** (nmol)
+-   `coef(fit)[[2]}` — **hældningen** (nmol/min)
+
+```{r}
+skæring <- ____
+hældning <- ____
+```
+
+For at visualisere regressionslinjen kan følgende kode tilføjes til ggplottet ovenfor (husk at nye lag kan tilføjes i `ggplot()` ved brug af `+`).
+
+```{r}
+geom_abline(intercept = skæring, slope = hældning)
+```
+
+## Steady-state-flux
+
+Beregn fluxen ud fra hældningen på kurven under steady state og overfladearealet:
+
+```{r}
+J_ss <- ____    # nmol/(cm²·min)
+```
+
+> **Opgave:** Hvad er steady state fluxen?
+
+## Lag-tid
+
+Lag-tiden er x-akseskæringen for regressionslinjen (hvor den ekstrapolerede linje krydser $n_{total} = 0$). Dette kan først vurderes visuelt og derefter udregnes ud fra regressionslinjen.
+
+```{r}
+t_lag <- ____ # min
+```
+
+> **Opgave:** Hvad er lag-tiden (visuelt og udregnet)?
+
+# Beregning af P~app~
+
+Brug din viden om sammenhængen mellem flux, permeabilitet ($P_{app}$) og koncentrationsgradient til at udregne $P_{app}$ og vær omhyggelig med enhedsomregninger (enhed skal være i cm/s). Du skal kunne redegøre for alle enhedsomregninger. Når du har udledt formlen, implementér den i R:
+
+```{r}
+# Dine enhedsomregninger her
+C0_nmol_per_cm3 <- ____   # omregn C0 fra mM til nmol/cm³
+J_per_s <- ____           # omregn J_ss fra nmol/(cm²·min) til nmol/(cm²·s)
+Papp <- ____              # cm/s
+
+```
+
+> **Opgave:** Hvad er P~app~?
+
+------------------------------------------------------------------------
+
+# Opsummering
+
+Følge kode kan bruges til at give en opsummering af de bestemt værdier, når de alle er defineret i R.
+
+```{r}
+cat("=== Resultater ===
+% transporteret (sink-kontrol):  ", signif(pct_transporteret, 3), "%
+Steady-state-flux:               ", signif(J_ss, 3), "nmol/(cm²·min)
+Lag-tid:                         ", signif(t_lag, 3), "min
+P_app:                           ", signif(Papp,  3), "cm/s")
+```

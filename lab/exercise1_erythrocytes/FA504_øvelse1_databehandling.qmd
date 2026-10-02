@@ -1,0 +1,359 @@
+---
+title: "Databehandling: Osmolytters indflydelse på erythrocytters cellevolumen og hæmolyse"
+author: "Sebastian Jakobsen"
+date: today
+lang: da
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    code-overflow: wrap
+    theme: cosmo
+    embed-resources: true
+execute:
+  echo: true
+  warning: false
+  message: false
+  eval: false
+---
+
+# Introduktion {.unnumbered}
+
+Dette dokument guider dig igennem dataanalysen for øvelsen med erythrocytter i **R**. I undersøger, hvordan NaCl, saccharose, urinstof og benzylalkohol påvirker erythrocytternes cellevolumen (hæmatokrit) og graden af hæmolyse. Fra data vil vi:
+
+1.  Indlæse det samlede datasæt for alle inkuberingsmedier
+2.  Beregne den korrigerede hæmatokritværdi 
+3.  Beregne hæmolysegraden i % relativt til saponin-kontrollen (= 100 % hæmolyse)
+4.  Omregne benzylalkohol-koncentrationen fra % til mM
+5.  Lave de fire figurer, rapporten kræver, ved at filtrere det samlede datasæt på forskellige måder
+6.  *(Valgfrit)* Fitte en sigmoid kurve til hæmolysedata og bestemme EC~50~
+
+Hver dog opmærksom på, at datasættet indeholder **to forskellige målinger** (hæmatokrit og hæmolyse), og de er ikke lavet på alle medier. Nogle kolonner vil derfor være tomme (`NA`) for nogle rækker — det er forventet.
+
+------------------------------------------------------------------------
+
+# Baggrund
+
+## Hæmatokrit
+
+Hæmatokritværdien aflæses på plastkortet for hvert af de to hæmatokritrør per prøve. I skal først beregne gennemsnittet af de to aflæsninger, og derefter korrigere for, at blodet er blevet fortyndet med inkuberingsmediet:
+
+$$\text{Hkt}_{korr} = \overline{\text{Hkt}} \cdot FF_{blod}$$ {#eq-hkt}
+
+hvor $FF_{blod}$ er den fortyndingsfaktor, blodet har undergået ved tilsætning af inkuberingsmedium (se metodeafsnittet i øvelsesvejledningen — hvor meget blod og hvor meget medium blev blandet?).
+
+## Hæmolysegrad
+
+Erythrocytter inkuberet med 0,01 % saponin regnes for **100 % hæmolyseret**. Alle andre prøver angives som en procentdel af denne kontrol:
+
+$$\text{Hæmolyse} \, (\%) = \frac{A_{543,korr}}{A_{543,korr,saponin}} \cdot 100$$ {#eq-hemolyse}
+
+hvor $A_{543,korr}$ er absorbansen korrigeret for den fortynding, prøven har undergået **inden** den spektrofotometriske måling.
+
+## Datastruktur
+
+**Foreslået datastruktur** — saml alle gruppers data i én fil (`øvelse1_data.xlsx`), med én række per måling:
+
+-   `gruppe` — hvilket hold der har lavet netop denne måling (`A`/`B`)
+-   `stof` — hvilken stof, der er brugt (`NaCl`, `saccharose`, `urinstof`, `benzylalkohol`, `saponin`, `vand`, `blod`)
+-   `konc_pct` — koncentrationen af det pågældende stof (%)
+-   `nacl_tilsat_pct` — tilsat NaCl (0 eller 0,9 %). For rene NaCl-opløsninger sættes denne til 0, da NaCl allerede står i `konc_pct`
+-   `osmolalitet` — opløsningens osmolalitet (Osm/kg).
+-   `hkt_1` — aflæst hæmatokritværdi, rør 1 (%).
+-   `hkt_2` — aflæst hæmatokritværdi, rør 2 (%). 
+-   `A543` — målt absorbans ved 543 nm. 
+-   `FF` — fortyndingsfaktor brugt inden absorbansmålingen (1 hvis målt direkte på supernatanten)
+
+> **OBS:** NaCl og saccharose er fordelt mellem de to hold, så her er `gruppe` bare en label uden videre betydning for databehandlingen. Urinstof, benzylalkohol (både osmolalitet og hæmolyse), saponin-kontrollen, rent vand og ubehandlet blod er derimod målt af **begge** hold — her får I to rækker med samme `stof`/`konc_pct`, men forskellig `gruppe` og formentlig lidt forskellige måleværdier. Det betyder blandt andet, at der findes **to** saponin-målinger i datasættet — se hæmolyseafsnittet nedenfor for hvorfor det har betydning.
+
+------------------------------------------------------------------------
+
+# Opsætning
+
+## Indlæs relevante pakker
+
+```{r}
+library(tidyverse)
+library(readxl)
+```
+
+> Husk at installere pakker med `install.packages()`, hvis dette ikke tidligere er gjort.
+
+## Konstanter
+
+```{r}
+MW_benzylalkohol  <- ____   # g/mol
+FF_blod           <- ____   # blodets fortyndingsfaktor i hæmatokrit forsøget
+```
+
+## Indlæs data
+
+```{r}
+data <- ____ # importer øvelse1_data.xlsx
+```
+
+------------------------------------------------------------------------
+
+# Databehandling
+
+## Hæmatokrit og fortyndingskorrektion
+
+Beregn gennemsnittet af dobbeltbestemmelsen og korrigér for blodets fortynding (@eq-hkt). Omregn samtidig benzylalkohol-koncentrationen til mM.
+
+```{r}
+data <- data %>%
+  mutate(
+    hkt_middel = ____,   # gennemsnittet af de to aflæsninger
+    hkt_korr   = if_else(stof == "blod", ____, ____),   # se hint
+    A543_korr  = ____,   # absorbans korrigeret for fortynding inden måling
+    konc_mM    = if_else(stof == "benzylalkohol", ____, NA) # konc af benzylalkohol, mM
+  )
+```
+
+> **Hint:** `if_else(betingelse, værdi_hvis_sand, værdi_hvis_falsk)` beregner en værdi forskelligt afhængigt af, om en betingelse er opfyldt for den pågældende række. I bruger den to steder her: til `konc_mM`, fordi omregningen fra % til mM kun giver mening for benzylalkohol (øvrige rækker skal sættes til `NA` i stedet for en udregning, der ikke er meningsfuld for dem); og til `hkt_korr`, fordi `"blod"`-kontrollen ikke er fortyndet med medium som de øvrige prøver, og derfor ikke skal korrigeres på samme måde. I begge tilfælde skal I udfylde hvilke beregninger der skal laves, som i normalt ville gøre i mutate. Vær opmærksom på, at ved `hkt_korr` skal der udfyldes to steder (først hvad man vil gøre med de rene blod prøver, derfter beregningen for alle de andre stoffer).
+
+## Hæmolysegrad relativt til saponin-kontrollen
+
+Saponin-kontrollen findes **to gange** i datasættet — én for hvert hold. Det giver mening at normalisere hvert holds prøver til deres **egen** saponin-prøve. Det betyder, at @eq-hemolyse skal anvendes *inden for hver gruppe for sig*, hvilket kan gøres ved brug af `group_by()` funktionen.
+
+Inden i `mutate()` kan I bruge `[...]` (kantede parenteser) til at plukke én bestemt værdi ud af en kolonne, fx. værdien af `A543_korr` i netop den række, hvor `stof` er `"saponin"` (`A543_korr[stof == "saponin"]`):
+
+```{r}
+data <- data %>%
+  group_by(____) %>%
+  mutate(
+    haemolyse_pct = ____   # se ligning 2
+  ) %>%
+  ungroup()
+```
+
+> **Opgave:** Tjek om begge holds saponin-prøve giver 100 % hæmolyse?
+
+------------------------------------------------------------------------
+
+# Plots til rapporten
+
+Rapporten kræver fire figurer. Fordi alle medier ligger i det samme (tidy) datasæt, er de første tre i praksis **samme kode** — blot med forskellig `filter()` og farvelægning.
+
+## Plot 1: Hæmatokrit mod osmolalitet (NaCl og saccharose)
+
+```{r}
+data %>%
+  filter(____) %>%   # kun NaCl og saccharose
+  ggplot(aes(x = ____, y = ____, color = ____)) +
+  geom_point() +
+  labs(
+    x = "____",                # x-aksetitel
+    y = "____",                # y-aksetitel
+    color = "____"             # farveforklaring
+  ) +
+  theme_classic()
+# tilføj gerne flere elementer for at formatere jeres plot (se tips nederst i guiden)
+```
+
+> **Hint:** `filter(stof %in% c("NaCl", "saccharose"))` beholder rækker, hvor `stof` er én af flere mulige værdier — nemmere end at skrive `stof == "NaCl" | stof == "saccharose"`.
+>
+> **Hint:** I kan tilføje `geom_hline()` for at tegne vandret linje ved en fast y-værdi — velegnet til at vise kontrolværdien for ubehandlet blod som reference. Argumentet `yintercept` skal være et enkelt tal, ikke en hel kolonne, så I skal først hente kontrolværdien ud af `data` (fx med `filter()` og `pull()`) og gemme den i sin egen variabel, før I bruger den her (anvend også `mean()`, så I ender med et samlet gennemsnit).
+
+
+## Plot 2: Hæmolysegrad mod osmolalitet (NaCl og saccharose)
+
+Genbrug skabelonen fra Plot 1 — I skal blot skifte y-variablen ud.
+
+```{r}
+# jeres kode her
+```
+
+## Plot 3: Hæmolysegrad mod benzylalkohol-koncentration
+
+Her filtreres til benzylalkohol tilsat 0,9 % NaCl, og x-aksen er koncentrationen i mM (ikke osmolalitet). Overvej om I vil fitte data til en sigmoid-kurve (se @sec-sigmoid)
+
+```{r}
+data %>%
+  filter(____) %>%   # kun benzylalkohol med tilsat NaCl
+  ggplot(aes(x = ____, y = ____)) +
+  geom_point() +
+  labs(
+    x = "____",
+    y = "____"
+  ) +
+  theme_classic()
+```
+
+> **OBS:** Benzylalkohol-hæmolyse er målt af begge hold, så I vil have to punkter pr. koncentration. Det er fint at vise dem begge. Overvej at farvelægge/formgive efter `gruppe`, hvis I vil kunne se, hvilket punkt der hører til hvilket hold.
+>
+> **Hint:** Her skal I filtrere på **to** betingelser samtidig — både `stof` og `nacl_tilsat_pct` skal have en bestemt værdi. Kombinér dem med `&` (og), fx `filter(betingelse_1 & betingelse_2)`, så kun rækker, hvor begge dele er sande, beholdes.
+
+## Plot 4: Søjlediagram — urinstof og benzylalkohol, med og uden NaCl
+
+Til sammenligning af de fire behandlinger (urinstof og benzylalkohol, hver med og uden 0,9 % NaCl) er et søjlediagram mere oplagt end et punktdiagram. Da hver behandling er målt af begge hold, har I to værdier pr. søjle — søjlens højde skal derfor være **gennemsnittet** af dem, ikke en enkelt rå værdi.
+
+I stedet for selv at beregne gennemsnittet på forhånd (fx med `group_by()`/`summarise()`), kan `stat_summary()` gøre det direkte inde i plottet: den regner en valgt sammenfatning (her middelværdien gennem `fun = "mean"`) ud for hver `x`/`fill`-kombination og tegner det som en søjle ved at sætte `geom = "col"`. For at sidestille kolonnerne sættes `position = "dodge"`. 
+Udover dette, tillader det jer også at visualisere hvert holds målinger som punkter gennem `geom_point()`. Her skal man dog også angive et position argument, for at punkterne fordeles på kolonnerne (`position = position_dodge(width = 0.9)`).
+
+Først skal datsættet filtreres for de relevante data til dette plot. For at få en læsbar forklaring er det en god idé først at lave en kolonne (`nacl_label`) med et rigtigt tekstlabel, der angiver om det er med eller uden 0,9 % NaCl:
+
+```{r}
+soejle_data <- data %>%
+  filter(
+  (stof == "urinstof") | (stof == "benzylalkohol" & konc_pct == 3.2)
+  ) %>% 
+  mutate(
+    nacl_label = ____   # fx "Uden NaCl" / "Med 0,9 % NaCl" — se hint
+  )
+
+ggplot(soejle_data, aes(x = ____, y = ____, fill = ____)) +
+  stat_summary(fun = "mean", geom = "col", position = "dodge") + 
+  # tilføj evt. geom_point for at vise de konkrete målinger
+  labs(
+    x = "____",
+    y = "____",
+    fill = "____"
+  ) +
+  theme_classic()
+```
+
+> **Note:** Filteret er bygget op af to "blokke" bundet sammen med `|` (eller) — én blok for urinstof, én for benzylalkohol. Benzylalkoholblokken bruger `&` (og) til at kræve, at `stof` **og** `konc_pct` passer samtidig.
+>
+> **Hint:** `if_else(nacl_tilsat_pct == 0, "____", "____")` giver jer den ene tekst, når betingelsen er sand, og den anden, når den er falsk — velegnet til `nacl_label`.
+
+
+------------------------------------------------------------------------
+
+# (Valgfrit) Sigmoid kurvefit og EC~50~ {#sec-sigmoid}
+
+Hæmolysedata følger typisk en **S-formet (sigmoid)** kurve: ved lave koncentrationer sker der ingenting, ved høje er alt hæmolyseret, og imellem er der et forholdsvis snævert interval.
+
+Til dette bruges `nls()` (*non-linear least squares*). Den fungerer som `lm()`, men i stedet for en formel af typen `y ~ x` skal I angive den **matematiske model**, data skal tilpasses til. Her bruges Hill-ligningen, som er den model, der klassisk anvendes til dosis-respons-sammenhænge i farmakologi og biokemi:
+
+$$y = \text{Bottom} + \frac{\text{Top} - \text{Bottom}}{1 + \left(\dfrac{\text{EC}_{50}}{x}\right)^{\text{Hill}}}$$ {#eq-hill}
+
+hvor `Bottom` og `Top` er kurvens nedre og øvre plateau, `EC50` er den koncentration, hvor kurven ligger halvvejs mellem `Bottom` og `Top`, og `Hill` (Hill-koefficienten) beskriver, hvor stejlt kurven stiger. En Hill-koefficient på 1 er det klassiske udgangspunkt, men til dette datasæt skal i måske bruge en stejlere hældning (Hill > 1). I dette tilfælde vil `y` og `x` være henholdsvis hæmolysegraden og koncentrationen.
+
+I skal selv give `nls()` fornuftige startgæt for parametrene via `start = list(...)`, så den har et sted at begynde søgningen.
+
+```{r}
+benzyl_data <- data %>%
+  filter(____)   # kun benzylalkohol med tilsat NaCl
+
+fit_sigmoid <- nls(
+  ____ ~ Bottom + (Top - Bottom) / (1 + (EC50/____)^Hill),   # se ligning 3 og udfyld med kolonnenavne for y- og x-værdier
+  data = benzyl_data,
+  start = list(Bottom = ____, Top = ____, EC50 = ____, Hill = ____)
+)
+
+summary(fit_sigmoid)
+
+EC50 <- ____   # træk EC50 ud af fittet
+```
+
+> **Hint:** Startgættene behøver ikke være præcise — bare i den rigtige størrelsesorden. `Bottom` og `Top` kan I gætte ud fra jeres data (hvad er hæmolysegraden ved hhv. den laveste og højeste koncentration?), og `EC50` kan gættes til et sted midt i jeres koncentrationsinterval. Med `Hill` skal i nok prøve jer frem, men start med 1 (skal nok være større).
+>
+> `coef()` virker på et `nls()`-fit på samme måde som på et `lm()`-fit — men her har koefficienterne navne i stedet for at være skæring/hældning, så I kan hente `EC50` med `coef(fit_sigmoid)[["EC50"]]`.Det vil dog også være relevant at angive `Top`, `Bottom` og `Hill` værdien, hvis fittet inkluderes i rapporten.
+
+## Tegn den fittede kurve på plottet
+
+En sigmoid kurve kan ikke tegnes med `geom_smooth(method = "lm")`. I stedet beregner I selv kurvens punkter over et fint gitter af x-værdier med `predict()`, og tegner dem med `geom_line(data = sigmoid_kurve)`. Tilføj dette til jeres forrige kurve med hæmolyse som funktion af konc. af benzylalkohol. Her giver det også mening at tilføje `scale_x_log10()`, for at få en logaritmisk x-akse. I can stadig justerer akserne ved brug `limits` argumentet. 
+
+```{r}
+sigmoid_kurve <- tibble(
+  konc_mM = seq(____, ____, length.out = 200)   # angiv hvilke koncentrationer gurven skal gå fra
+) %>%
+  mutate(
+    haemolyse_pct = predict(fit_sigmoid, newdata = .) # fittet bruges til at forudsige y-værdier 
+  )
+
+# tilføj kurven til plot 3 via geom_line(data = sigmoid_kurve) + scale_x_log10()
+
+```
+
+> **Hint:** `seq(fra, til, length.out = 200)` laver 200 jævnt fordelte værdier — nok til at kurven ser glat ud.
+>
+> Bemærk, at `geom_line()` får sit **eget** `data`-argument. Punkterne kommer fra jeres målinger, kurven fra modellen — to forskellige datasæt i samme plot.
+
+> **Opgave:** Overvej om jeres fit giver mening og følger jeres datapunkter? Hvis ikke skal I måske genbesøge jeres fit, eller overveje om det giver mening at have med i jeres rapport.  
+
+
+------------------------------------------------------------------------
+
+# Tips til formatering af jeres plots
+
+Her er nogle valgfrie tips til at gøre jeres figurer mere læsevenlige og professionelle.
+
+## Punktstørrelse
+
+Standardstørrelsen på punkter i `geom_point()` er ofte lidt lille til en rapportfigur. Justér med `size` (prøv jer frem med forskellige tal):
+
+```{r}
+geom_point(size = ____)
+```
+
+## Generel tekststørrelse
+
+De fleste temaer (fx `theme_classic()`) tager et `base_size`-argument, der skalerer al tekst i figuren (akse-titler, forklaring, osv.) på én gang:
+
+```{r}
+theme_classic(base_size = ____)
+```
+
+## Matematik i akse-titler
+
+Almindelig tekst i `labs()` kan ikke vise brøker, subscripts eller potenser korrekt. Brug i stedet `expression()`:
+
+```{r}
+labs(y = expression(EC[50] ~ "[mM]")) # Giver "EC_50 [mM]" som y-aksetitel
+```
+
+Nogle byggeklodser, I kan sætte sammen inde i `expression()`:
+
+-   `x^{tal}` laver en superscript (hævet skrift), fx `cm^{2}` → cm².
+-   `x[tal]` laver en subscript (sænket skrift), fx `EC[50]` → EC₅₀.
+-   `frac(a, b)` tegner en rigtig brøk, fx `frac(dC, dt)` → $\frac{dC}{dt}$.
+-   Græske bogstaver skrives ved deres engelske navn, fx `alpha`, `beta`, `mu` → α, β, µ.
+-   `~` indsætter et lille mellemrum mellem delene (brug `*` i stedet, hvis I ikke ønsker mellemrum).
+-   Almindelig tekst skal stå i anførselstegn — alt andet kan fortolkes som matematiske symboler/variabelnavne.
+
+## Juster aksegrænser
+
+Sæt `limits` for at fastlåse akserne, og `expand = c(0, 0)` for at fjerne det automatiske "luft-mellemrum", ggplot ellers tilføjer omkring data:
+
+```{r}
+scale_x_continuous(limits = c(____, ____), expand = c(0, 0)) +
+scale_y_continuous(limits = c(____, ____), expand = c(0, 0))
+```
+
+> **OBS:** Med `expand = c(0, 0)` vil punkter, der ligger helt ude i et hjørne, ofte blive halvt beskåret af figurens kant. Tilføj `coord_cartesian(clip = "off")`, hvis det sker.
+
+> **OBS:** Hæmolysegraden er en procentdel — overvej, om det giver bedst mening at fastlåse y-aksen til 0–100 %, så jeres figurer er direkte sammenlignelige.
+
+## Form og farve sammen — kombinér til én forklaring
+
+`shape` fungerer ligesom `color`, men giver hver gruppe sin egen punktform (cirkel, trekant, kryds) i stedet for en farve — nyttigt for farveblinde læsere, og fordi farver ofte forsvinder ved sort/hvid-print. Tilføjes samme sted som `color`, inde i `aes()`.
+
+Hvis I farvelægger og formgiver punkterne efter **samme** variabel, samler ggplot automatisk de to forklaringer i én, i stedet for at vise to separate — det gør figuren mindre rodet og lettere at læse:
+
+```{r}
+ggplot(data, aes(x = ____, y = ____, color = ____, shape = ____)) +
+  geom_point() +
+  labs(color = "____", shape = "____")   # samme titel begge steder -> slås sammen
+```
+
+> **OBS:** Titlen i `labs()` skal være identisk for `color` og `shape` (bogstaveligt samme tekststreng), ellers forbliver de to forklaringer adskilte.
+
+## Valg af farvepalet
+
+ggplots standardfarver er ikke altid lette at skelne fra hinanden — særligt for farveblinde læsere. `scale_color_*()` lader jer nemt bytte hele paletten ud, uden at ændre resten af koden, fx:
+
+```{r}
+scale_color_viridis_d()
+```
+
+`viridis_d()` ("d" for *diskret*, dvs. til diskrete grupper (modsat kontinuerlige)) er designet til at være letlæselig for farveblinde og bevarer sin kontrast selv i sort/hvid-print — et godt standardvalg.
+
+Et par alternativer, I også kan støde på:
+
+-   `scale_color_brewer(palette = "Set2")` — et sæt håndplukkede, adskillelige farver fra [ColorBrewer](https://colorbrewer2.org/); flere paletter at vælge imellem (`"Set1"`, `"Dark2"`, osv.).
+-   `scale_color_manual(values = c(____, ____))` — vælg jeres egne farver manuelt (fx `"steelblue"`, `"#E69F00"`), hvis I har et bestemt udseende i tankerne.
+
+> **OBS:** I søjlediagrammet (Plot 4) bruger I `fill` i stedet for `color` — der hedder de tilsvarende funktioner `scale_fill_viridis_d()`/`scale_fill_brewer()`/`scale_fill_manual()`. Samme idé, blot for `fill`-æstetikken.

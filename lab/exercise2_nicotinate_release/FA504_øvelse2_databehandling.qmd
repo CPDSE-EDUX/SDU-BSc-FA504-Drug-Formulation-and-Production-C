@@ -1,0 +1,292 @@
+---
+title: "Databehandling: In vitro afgift af nikotinsyreestre fra forskellige salvegrundlag"
+author: "Sebastian Jakobsen"
+date: today
+lang: da
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    code-overflow: wrap
+    theme: cosmo
+    embed-resources: true
+execute:
+  echo: true
+  warning: false
+  message: false
+  eval: false
+---
+
+# Introduktion {.unnumbered}
+
+Dette dokument guider dig igennem dataanalysen for in vitro-afgiftsforsøget med nikotinsyreestre i **R**. Fremgangsmåden minder meget om Caco-2-øvelsen (samme princip med korrektion for prøveudtagning), så dette dokument er holdt kort og fokuserer primært på det, der er nyt eller anderledes her. Fra data vil vi:
+
+1.  Indlæse det samlede datasæt for alle ni præparater
+2.  Beregne koncentration ud fra A263 og kvadratroden af tiden (Higuchi-kinetik: $Q$ er lineær i $\sqrt{t}$, ikke i $t$)
+3.  Beregne den kumulative afgivne mængde pr. arealenhed ($Q$) — for hvert præparat for sig
+5.  Lave en lineær regression ($Q$ mod $\sqrt{t}$) for hvert af de ni præparater
+6.  Lave de tre plots, rapporten kræver, ved at filtrere det samlede datasæt på forskellige måder
+7.  Samle alle ni $k$-værdier i én tabel
+
+## Forskelle fra Caco-2 databehandling (e-time 2) {.unnumbered}
+
+-   I har **ni datasæt** (præparater) i stedet for ét. Det betyder, at den kumulative korrektion for prøveudtagning skal beregnes *for hvert præparat for sig* — ikke hen over hele datasættet.
+-   Sammenhængen er lineær i $\sqrt{t}$ (Higuchi-kinetik), ikke i $t$ selv.
+-   Ekstinktionskoefficienten og præparatets areal varierer fra præparat til præparat.
+
+------------------------------------------------------------------------
+
+# Baggrund
+
+Den diffusionskontrollerede stofafgift fra et halvfast grundlag (Higuchi-kinetik) forudsiger, at den afgivne mængde stof pr. arealenhed, $Q$, er proportional med kvadratroden af tiden:
+
+$$Q = k\sqrt{t}$$ {#eq-higuchi}
+
+hvor $k$ er afgiftshastighedskonstanten (µmol·cm⁻²·min⁻½). Det betyder, at et plot af $Q$ mod $\sqrt{t}$ bør give en ret linje, med hældning $k$.
+
+Den totale afgivne mængde stof $M$ til tiden $t$ korrigeres for prøveudtagning på samme måde som i Caco-2-øvelsen — hver gang I tager en prøve, fjerner I noget af det allerede afgivne stof, så det skal lægges tilbage til den aktuelle måling:
+
+$$M_t = C_t \cdot V_t + V_s \sum_{i<t} C_i$$ {#eq-cumulative}
+
+$Q$ findes derefter som $M/\text{areal}$.
+
+**Foreslået datastruktur** — saml alle ni præparaters data i én fil (`øvelse2_data.xlsx`), med de præparatspecifikke konstanter gentaget på hver række:
+
+-   `praeparat` — præparatnummer (1-9)
+-   `stof` — hvilken nikotinsyreester (methylnicotinat/butylnicotinat/hexylnicotinat)
+-   `formulering` — hvilket grundlag (creme (vand), creme (glycerol), hydrofob salve, hydrofil salve, gel)
+-   `tid_min` — prøvetagningstidspunkt i minutter
+-   `A263` — målt absorbans ved 263 nm
+-   `FF` — fortyndingsfaktor (husk: præparat 3 kræver ikke fortynding, dvs. FF = 1)
+-   `diameter_cm` — den målte diameter af dialysecellens salvereservoir
+-   `Vt_mL` — det målte volumen i "det store rum" af dialysecellen
+-   `eps263` — ekstinktionskoefficienten for det pågældende stof (se tabellen ovenfor)
+
+------------------------------------------------------------------------
+
+# Opsætning
+
+## Indlæs relevante pakker
+
+```{r}
+library(tidyverse)
+library(readxl)
+```
+
+## Konstant prøvevolumen
+
+I modsætning til de andre konstanter er `Vs` (den udtagne prøves volumen) den samme for alle ni præparater, så den defineres som én enkelt værdi.
+
+```{r}
+Vs <- ____   # udtaget prøvevolumen ved hvert tidspunkt, mL
+```
+
+## Indlæs data
+
+```{r}
+data <- ____ # importer øvelse2_data.xlsx
+```
+
+> Tjek at data indeholder alle ni præparater, og at hvert har fem målinger.
+
+------------------------------------------------------------------------
+
+# Databehandling
+
+## Areal, koncentration, og kvadratrod til tiden
+
+Beregn præparaternes areal ud fra den målte diameter, korrigér absorbansen for fortynding, og omregn til koncentration. Tilføj også en kolonne med kvadratrod til tiden. 
+
+```{r}
+data <- data %>%
+  mutate(
+    areal_cm2 = ____,        # brug diameter_cm
+    A263_korr = ____,        # korriger for fortynding vha. FF
+    C         = ____,        # µmol/mL, brug Lambert-Beers lov og husk enhedsomregning
+    sqrt_tid  = ____         # kvadratroden af tid_min
+  )
+```
+
+## Kumulativ afgivet mængde og $Q$ — for hvert præparat for sig
+
+Brug @eq-cumulative til at beregne $M_t$, og derefter $Q = M/\text{areal}$. Da I nu har ni forskellige præparater i samme datasæt, skal den kumulative sum **nulstilles for hvert præparat**. Det opnås ved at gruppere med `group_by(praeparat)` og derefter bruge `cumsum()`/`lag()` på samme måde, som I gjorde i Caco-2-øvelsen — blot nu inden for hver gruppe.
+
+```{r}
+data <- data %>%
+  group_by(praeparat) %>%
+  mutate(
+    M = ____,   # afgivet mængde over membran, µmol (se ligning 2 + e-time 2)
+    Q = ____    # M divideret med præparatets areal, µmol/cm^2 
+  ) %>%
+  ungroup()
+```
+
+> **Hint:** Husk `ungroup()` til sidst, så resten af koden ikke utilsigtet forbliver grupperet efter `praeparat`.
+
+## Lineær regression for hvert præparat
+
+I stedet for at filtrere og fitte ét præparat ad gangen, kan `group_by()` kombineret med `summarise()` fitte en separat `lm()`-model for hvert af de ni præparater i ét trin.
+
+Udfordringen er, at `lm()` normalt forventer et navngivet dataframe via `data = ...`-argumentet. Inde i `summarise()` findes der ikke ét — I arbejder jer igennem data gruppe for gruppe, ikke ud fra en eksisterende tabel. `pick(everything())` løser det: den samler den aktuelle gruppes kolonner til en lille dataframe på stedet, så `lm()` har noget at fitte til. Fordi `lm()` returnerer et helt modelobjekt frem for et enkelt tal, pakkes det ind i `list()`, så det kan gemmes i én tabelcelle.
+
+```{r}
+regression <- data %>%
+  group_by(____) %>%
+  summarise(
+    model = list(lm(___ ~ ___, data = pick(everything()))),
+
+    # Træk skæring, hældning (k) og R² ud af modellen for dette præparat
+    skæring   = coef(model[[1]])[[1]],
+    k         = ____,
+    R2        = ____
+  ) %>%
+  select(-model) %>%    # fjerner model-kolonnen, da den kun var nødvendig for at få tallene ovenfor
+  ungroup()
+
+regression
+```
+
+> **Hint:** `model` er en liste med ét modelobjekt i — selv når der kun er ét element, skal I bruge **dobbelt** klammeparentes, `model[[1]]`, for at pakke selve modellen ud af listen (enkelt klamme, `model[1]`, giver jer en liste med ét element i, ikke modellen selv). Herfra er det samme `coef()` og `summary()`, I allerede kender:
+>
+> -   `coef(model[[1]])[[1]]` — skæring
+> -   `coef(model[[1]])[[2]]` — hældning
+> -   `summary(model[[1]])$r.squared` — R²
+>
+> Læs evt. mere om lineær regression og se et lignende eksempel [her](https://cpdse-edux.github.io/R_documentation/topics/linear-regression.html).
+
+------------------------------------------------------------------------
+
+# Plots til rapporten
+
+Rapporten kræver tre figurer af Q plottet som funktion af √t, der sammenligner et udvalg af præparaterne. Fordi data for alle ni præparater ligger i det samme (tidy) datasæt, er alle tre plots i virkeligheden **samme kode**, blot med forskellig `filter()` og farvelægning.
+
+```{r}
+# Plot 1: Alle formuleringer med methylnicotinat (præparat 1-5)
+data %>%
+  filter(____) %>%
+  ggplot(aes(x = ____, y = ____, color = ____)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +  #tilføjer regressionslinje
+  labs(
+    x = "____",                # x-aksetitel
+    y = "____",                # y-aksetitel
+    color = "____"             # farveforklaring
+    ) +
+  theme_classic()
+# tilføj gerne flere elementer for at formatere jeres plot (se tips nederst i guiden)
+```
+
+> **Opgave:** Genbrug skabelonen ovenfor til de to resterende figurer — I skal blot ændre `filter()`-betingelsen og hvilken kolonne, I farvelægger efter:
+>
+> -   Methyl-, butyl- og hexylnicotinat i **hydrofob salve** (præparat 3, 7 og 9), farvelagt efter `stof`.
+> -   Methyl-, butyl- og hexylnicotinat i **creme** (præparat 1, 6 og 8), farvelagt efter `stof`.
+
+------------------------------------------------------------------------
+
+# Saml resultaterne
+
+I `regression`-tabellen fra regressionsafsnittet har I allerede det, I skal bruge til den afsluttende oversigt over $k$-værdier: én række per præparat, med tilørende `k` værdier.
+
+> **Hint:** Grupperer I efter `praeparat, stof, formulering` (i stedet for kun `praeparat`) i regressionsafsnittet, følger `stof` og `formulering` automatisk med ud i `regression` — I skal ikke selv taste dem ind igen.
+
+`skæring` (intercept) og R² hører hjemme i figurteksterne eller en tabel i bilag — ikke nødvendigvis i selve resultatafsnittets oversigt over $k$-værdier. Fjern dem fra den endelige tabel med `select()`:
+
+```{r}
+k_oversigt <- regression %>%
+  select(____) %>%   # behold kun de kolonner, I vil have med i den endelige tabel
+```
+
+> **Opgave:** Overvej, hvordan I bedst formidler regressionsligningerne (skæring, hældning, R²) for alle ni præparater i rapporten — fx i figurteksterne for de tre plots, eller som en samlet tabel i bilag.
+
+------------------------------------------------------------------------
+
+# Tips til formatering af jeres plots
+
+Her er nogle valgfrie tips til at gøre jeres figurer mere læsevenlige og professionelle. 
+
+## Punktstørrelse
+
+Standardstørrelsen på punkter i `geom_point()` er ofte lidt lille til en rapportfigur. Justér med `size` (prøv jer frem med forskellige tal):
+
+```{r}
+geom_point(size = ____)
+```
+
+## Generel tekststørrelse
+
+De fleste temaer (fx `theme_classic()`) tager et `base_size`-argument, der skalerer al tekst i figuren (akse-titler, forklaring, osv.) på én gang:
+
+```{r}
+theme_classic(base_size = ____)
+```
+
+
+## Matematik i akse-titler
+
+Almindelig tekst i `labs()` kan ikke vise kvadratrødder, brøker eller potenser korrekt. Brug i stedet `expression()`:
+
+```{r}
+labs(x = expression(sqrt(t) ~ "[min"^{1/2}*"]")) # Giver "√t [min½]" som x-aksetitel
+```
+
+Nogle byggeklodser, I kan sætte sammen inde i `expression()`:
+
+-   `sqrt(x)` tegner et √-symbol over `x`, fx `sqrt(t)` → $\sqrt{t}$.
+-   `x^{tal}` laver en superscript (hævet skrift), fx `cm^{2}` → cm².
+-   `x[tal]` laver en subscript (sænket skrift), fx `C[0]` → C₀.
+-   `frac(a, b)` tegner en rigtig brøk, fx `frac(dC, dt)` → $\frac{dC}{dt}$.
+-   Græske bogstaver skrives ved deres engelske navn, fx `alpha`, `beta`, `mu` → α, β, µ.
+-   `~` indsætter et lille mellemrum mellem delene (brug `*` i stedet, hvis I ikke ønsker mellemrum).
+-   Almindelig tekst skal stå i anførselstegn — alt andet fortolkes som matematiske symboler/variabelnavne.
+
+
+## Juster aksegrænser
+
+Sæt `limits` for at fastlåse akserne, og `expand = c(0, 0)` for at fjerne det automatiske "luft-mellemrum", ggplot ellers tilføjer omkring data:
+
+```{r}
+scale_x_continuous(limits = c(____, ____), expand = c(0, 0)) +
+scale_y_continuous(limits = c(____, ____), expand = c(0, 0))
+```
+
+> **OBS:** Sætter I `expand = c(0, 0)`, vil punkter, der ligger helt ude i hjørnet (fx ved $x=0$), ofte blive halvt beskåret af figurens kant. Tilføj `coord_cartesian(clip = "off")`, hvis det sker.
+
+## Regressionslinjer, der rækker ud over datapunkterne
+
+`geom_smooth()` tegner som standard kun linjen mellem det laveste og højeste datapunkt. `fullrange = TRUE` beder den i stedet om at række ud over hele akse-**skalaens** område:
+
+```{r}
+geom_smooth(method = "lm", se = FALSE, fullrange = TRUE)
+```
+
+## Form og farve sammen — kombinér til én forklaring
+
+`shape` fungerer ligesom `color`, men giver hver gruppe sin egen punktform (cirkel, trekant, kryds) i stedet for en farve — nyttigt for farveblinde læsere, og fordi farver ofte forsvinder ved sort/hvid-print. Tilføjes samme sted som `color`, inde i `aes()`.
+
+Hvis I farvelægger og formgiver punkterne efter **samme** variabel, samler ggplot automatisk de to forklaringer i én, i stedet for at vise to separate — det gør figuren mindre rodet og lettere at læse:
+
+```{r}
+ggplot(data, aes(x = ____, y = ____, color = ____, shape = ____)) +
+  geom_point() +
+  labs(color = "____", shape = "____")   # samme titel begge steder -> slås sammen
+```
+
+> **OBS:** Titlen i `labs()` skal være identisk for `color` og `shape` (bogstaveligt samme tekststreng), ellers forbliver de to forklaringer adskilte.
+
+## Valg af farvepalet
+
+ggplots standardfarver er ikke altid lette at skelne fra hinanden — særligt for farveblinde læsere. `scale_color_*()` lader jer nemt bytte hele paletten ud, uden at ændre resten af koden, fx:
+
+```{r}
+scale_color_viridis_d()
+```
+
+`viridis_d()` ("d" for *diskret*, dvs. til diskrete grupper (modsat kontinuerlige)) er designet til at være letlæselig for farveblinde og bevarer sin kontrast selv i sort/hvid-print — et godt standardvalg.
+
+Et par alternativer, I også kan støde på:
+
+-   `scale_color_brewer(palette = "Set2")` — et sæt håndplukkede, adskillelige farver fra [ColorBrewer](https://colorbrewer2.org/); flere paletter at vælge imellem (`"Set1"`, `"Dark2"`, osv.).
+-   `scale_color_manual(values = c(____, ____, ____))` — vælg jeres egne farver manuelt (fx `"steelblue"`, `"#E69F00"`), hvis I har et bestemt udseende i tankerne.
+
+> **OBS:** Har I brugt `fill` i stedet for `color` i `aes()` (fx til søjlediagrammer), hedder den tilsvarende funktion `scale_fill_viridis_d()`/`scale_fill_brewer()` — samme idé, blot for `fill`-æstetikken.

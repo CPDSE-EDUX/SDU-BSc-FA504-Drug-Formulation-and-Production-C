@@ -1,0 +1,105 @@
+---
+title: "FA504: Titel på laboratorieøvelse"              # Skriv titlen på labøvlesen her
+subtitle: "HX | Gruppe X+X | Øvelse udført: DD/MM-YYYY" # Tilføj hold nr. + gruppe nr. + dato for øvelse 
+author:
+  - name: "Fulde navn (SDU brugernavn)"                 # Udfyld med jeres navne + SDU brugernavn
+  - name: "Fulde navn (SDU brugernavn)"
+  - name: "Fulde navn (SDU brugernavn)"
+  - name: "Fulde navn (SDU brugernavn)"
+  - name: "Fulde navn (SDU brugernavn)"
+  
+# Nedenstående indstllinger skal I ikke redigere
+date: today                       # Sætter dato til dags dato ved render 
+date-format: "DD/MM-YYYY"         # Bestemmer dato format
+format:
+  docx:                           # render til Word (.docx)
+    number-sections: true         # Afsnit nummereres
+    tbl-cap-location: top         # Tabeltekst står over tabeller
+    fig-cap-location: bottom      # Figurtekst står under figurer
+    reference-doc: reference.docx # Linker til reference docx til tekstformatering 
+lang: da                          # Sætter dokumentsproget til dansk
+crossref:
+  fig-title: "**Figur**"          # Gør figurtiteltekst fed 
+  tbl-title: "**Tabel**"          # Gør tabeltiteltekst fed 
+bibliography: references.bib      # Henviser til BibTeX-fil med referencer 
+csl: vancouver.csl                # Henviser til fil der styrer referencestil (Vancouver)
+execute:
+  echo: false                     # Kodeblokke vises ikke i renderet dokument
+  warning: false                  # Advarsler fra kode vises ikke i renderet dokument
+  message: false                  # Beskeder fra kode vises ikke i renderet dokument
+---
+
+<!-- Herunder indsættes fil med jeres underskrifter -->
+
+![](underskrifter.png)
+
+## Forord {.unnumbered}
+
+<!-- Her angives fx brug af AI samt CRediT udtalelse om hvem der har gjort hvad  -->
+
+A lavede X, B lavede Y og Z...
+
+
+```{r}
+#| label: setup
+
+# SETUP: Denne kodeblok kan evt. bruges til at loade relevante pakker (tidyverse, knitr, etc) eller globale indstillinger.
+library(tidyverse)
+library(knitr)
+options(OutDec = ",") # Sætter komma som decimalseparator for kodeoutput (tabeller, plots, etc.). 
+
+```
+
+\newpage
+
+# Introduktion
+
+## Formål
+
+<!-- Beskriv med egne ord, hvad formålet med øvelsen er. -->
+
+## Teori
+
+<!-- Her gennemgås det teoretiske baggrundsstof, relevante formler, etc. der er nødvendigt for at forstå øvelsens resultater og diskussion. Husk referencer og angivelse af hvad symboler betyder i angivne formler. OBS! Formål + Teori må max fylde 1 side i renderet Word dokument -->
+
+# Eksperimentelt
+
+## Materialer og metoder
+
+<!-- Her refereres der til øvelsesvejledning, samt evt. afvigelser fra øvelsesvejledningen. OBS!  Materialer og metoder + Databehandling må max fylde 2 sider i renderet Word dokument -->
+
+## Databehandling
+
+<!-- Gennemgå relevante formler/beregninger samt beregningseksempler der er blevet anvendt til at analysere jeres data. Dette skal ikke vises som R kode, men som formler der beskriver databehandlingen. I kan også bruge dette afsnit til at skrive al jeres kode der lave databehandlingen, men denne ville ikke blive vist i det endelige dokument -->
+
+```{r}
+# DATABEHANDLING: I kan bruge denne kodeblok til at udføre jeres databehandling, som sker i baggrunden
+
+```
+
+# Resultater
+
+<!-- Dette afsnit skal afrapportere de opnåede resultater i form af tal, tabeller eller figurer med tilhørende tabel- eller figurtekst. Husk også at beskrive jeres resultater med en brødtekst, der guider læseren igennem jeres observationer, uden at fortolke på data (hører til i diskussion). OBS! Resultatafsnittet må højst fylde en side i renderet Word dokument. -->
+
+<!-- Husk at I kan indsætte kodeblokke til fx at producere plots med ggplot() eller tabeller med kable() -->
+
+# Diskussion
+
+<!-- Skal være et sammenhængende afsnit, hvori øvelsens resultater diskuteres i forhold til relevant baggrundsteori og litteratur. Studiespørgsmålene kan ofte (men ikke altid) indgå i dette afsnit. Husk angivelse af referencer. -->
+
+# Konklusion
+
+<!-- En kort konklusion, der opsumerer hvad der er blevet gjort og hvad man fandt ud af. OBS! Diskussionsafsnittet + konklusion må højst fylde 2 sider i renderet Word dokument. -->
+
+# Referencer
+
+<!-- Her angives en liste over referencer (gøres automatisk hvis man har anvendt metoden med Zotero) -->
+
+::: {#refs}
+:::
+
+\newpage
+
+# Bilag {.appendix}
+
+<!-- Her angives evt. bilag. Det kan fx være rådata, eller figurer og tabeller, der kan være relevant for læseren, men ikke nødvendige for at forstå resten af rapporten. Husk at give en lille forklaring til hvad hvert element i bilagslisten er. -->
