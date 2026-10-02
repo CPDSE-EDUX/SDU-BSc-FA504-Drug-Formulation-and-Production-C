@@ -5,9 +5,7 @@ The lab part of FA504 has four exercises. Exercises 1-3 each have a data process
 Each folder contains:
 
 * `FA504\\\_øvelseX\\\_databehandling.qmd` / `.html`: the data processing guide (Danish)
-* `øvelseX\\\_script.R`: an R script with the core analysis
 * `øvelseX\\\_data\\\_skabelon.xlsx`: an empty template for entering your own lab data
-* `øvelseX\\\_data\\\_eksempel.xlsx`: example data, so the guide can be run before the lab
 
 ## Exercise 1: Osmolytes, erythrocyte volume and hemolysis
 
