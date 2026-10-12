@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use these materials in teaching, research, or derived work, please cite as below."
+title: "FA504: Drug Formulation and Production C"
+abstract: "R and Quarto material for FA504 Drug Formulation and Production C, a 5 ECTS bachelor course in pharmacy at the University of Southern Denmark. Students learn to treat, visualise and report experimental data in R and Quarto: a tutorial on Caco-2 permeability, data processing guides for three laboratory exercises (erythrocyte volume and hemolysis in osmolyte solutions, Higuchi release of nicotinates from semisolid bases, and accelerated stability of acetylsalicylic acid with Arrhenius analysis), and a Quarto lab report template with a writing guide and a worked example report. Student-facing material is in Danish."
+authors:
+  - family-names: "Jakobsen"
+    given-names: "Sebastian"
+    affiliation: "CPDSE, University of Southern Denmark"
+version: "2026.1"
+date-released: "2026-10-12"
+license: CC-BY-4.0
+url: "https://github.com/CPDSE-EDUX/SDU-BSc-FA504-Drug-Formulation-and-Production-C"
+keywords:
+  - teaching
+  - pharmaceutical data science
+  - CPDSE
+  - pharmaceutics
+  - R
+  - Quarto
