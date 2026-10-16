@@ -29,7 +29,7 @@ Dette dokument guider dig igennem dataanalysen for øvelsen med erythrocytter i 
 5.  Lave de fire figurer, rapporten kræver, ved at filtrere det samlede datasæt på forskellige måder
 6.  *(Valgfrit)* Fitte en sigmoid kurve til hæmolysedata og bestemme EC~50~
 
-Hver dog opmærksom på, at datasættet indeholder **to forskellige målinger** (hæmatokrit og hæmolyse), og de er ikke lavet på alle medier. Nogle kolonner vil derfor være tomme (`NA`) for nogle rækker — det er forventet.
+Vær dog opmærksom på, at datasættet indeholder **to forskellige målinger** (hæmatokrit og hæmolyse), og de er ikke lavet på alle medier. Nogle kolonner vil derfor være tomme (`NA`) for nogle rækker — det er forventet.
 
 ------------------------------------------------------------------------
 
@@ -56,7 +56,7 @@ hvor $A_{543,korr}$ er absorbansen korrigeret for den fortynding, prøven har un
 **Foreslået datastruktur** — saml alle gruppers data i én fil (`øvelse1_data.xlsx`), med én række per måling:
 
 -   `gruppe` — hvilket hold der har lavet netop denne måling (`A`/`B`)
--   `stof` — hvilken stof, der er brugt (`NaCl`, `saccharose`, `urinstof`, `benzylalkohol`, `saponin`, `vand`, `blod`)
+-   `stof` — hvilket stof, der er brugt (`NaCl`, `saccharose`, `urinstof`, `benzylalkohol`, `saponin`, `vand`, `blod`)
 -   `konc_pct` — koncentrationen af det pågældende stof (%)
 -   `nacl_tilsat_pct` — tilsat NaCl (0 eller 0,9 %). For rene NaCl-opløsninger sættes denne til 0, da NaCl allerede står i `konc_pct`
 -   `osmolalitet` — opløsningens osmolalitet (Osm/kg).
@@ -111,7 +111,7 @@ data <- data %>%
   )
 ```
 
-> **Hint:** `if_else(betingelse, værdi_hvis_sand, værdi_hvis_falsk)` beregner en værdi forskelligt afhængigt af, om en betingelse er opfyldt for den pågældende række. I bruger den to steder her: til `konc_mM`, fordi omregningen fra % til mM kun giver mening for benzylalkohol (øvrige rækker skal sættes til `NA` i stedet for en udregning, der ikke er meningsfuld for dem); og til `hkt_korr`, fordi `"blod"`-kontrollen ikke er fortyndet med medium som de øvrige prøver, og derfor ikke skal korrigeres på samme måde. I begge tilfælde skal I udfylde hvilke beregninger der skal laves, som i normalt ville gøre i mutate. Vær opmærksom på, at ved `hkt_korr` skal der udfyldes to steder (først hvad man vil gøre med de rene blod prøver, derfter beregningen for alle de andre stoffer).
+> **Hint:** `if_else(betingelse, værdi_hvis_sand, værdi_hvis_falsk)` beregner en værdi forskelligt afhængigt af, om en betingelse er opfyldt for den pågældende række. I bruger den to steder her: til `konc_mM`, fordi omregningen fra % til mM kun giver mening for benzylalkohol (øvrige rækker skal sættes til `NA` i stedet for en udregning, der ikke er meningsfuld for dem); og til `hkt_korr`, fordi `"blod"`-kontrollen ikke er fortyndet med medium som de øvrige prøver, og derfor ikke skal korrigeres på samme måde. I begge tilfælde skal I udfylde hvilke beregninger der skal laves, som I normalt ville gøre i mutate. Vær opmærksom på, at ved `hkt_korr` skal der udfyldes to steder (først hvad man vil gøre med de rene blod prøver, derefter beregningen for alle de andre stoffer).
 
 ## Hæmolysegrad relativt til saponin-kontrollen
 
@@ -192,7 +192,7 @@ Til sammenligning af de fire behandlinger (urinstof og benzylalkohol, hver med o
 I stedet for selv at beregne gennemsnittet på forhånd (fx med `group_by()`/`summarise()`), kan `stat_summary()` gøre det direkte inde i plottet: den regner en valgt sammenfatning (her middelværdien gennem `fun = "mean"`) ud for hver `x`/`fill`-kombination og tegner det som en søjle ved at sætte `geom = "col"`. For at sidestille kolonnerne sættes `position = "dodge"`. 
 Udover dette, tillader det jer også at visualisere hvert holds målinger som punkter gennem `geom_point()`. Her skal man dog også angive et position argument, for at punkterne fordeles på kolonnerne (`position = position_dodge(width = 0.9)`).
 
-Først skal datsættet filtreres for de relevante data til dette plot. For at få en læsbar forklaring er det en god idé først at lave en kolonne (`nacl_label`) med et rigtigt tekstlabel, der angiver om det er med eller uden 0,9 % NaCl:
+Først skal datasættet filtreres for de relevante data til dette plot. For at få en læsbar forklaring er det en god idé først at lave en kolonne (`nacl_label`) med et rigtigt tekstlabel, der angiver om det er med eller uden 0,9 % NaCl:
 
 ```{r}
 soejle_data <- data %>%
@@ -229,7 +229,7 @@ Til dette bruges `nls()` (*non-linear least squares*). Den fungerer som `lm()`, 
 
 $$y = \text{Bottom} + \frac{\text{Top} - \text{Bottom}}{1 + \left(\dfrac{\text{EC}_{50}}{x}\right)^{\text{Hill}}}$$ {#eq-hill}
 
-hvor `Bottom` og `Top` er kurvens nedre og øvre plateau, `EC50` er den koncentration, hvor kurven ligger halvvejs mellem `Bottom` og `Top`, og `Hill` (Hill-koefficienten) beskriver, hvor stejlt kurven stiger. En Hill-koefficient på 1 er det klassiske udgangspunkt, men til dette datasæt skal i måske bruge en stejlere hældning (Hill > 1). I dette tilfælde vil `y` og `x` være henholdsvis hæmolysegraden og koncentrationen.
+hvor `Bottom` og `Top` er kurvens nedre og øvre plateau, `EC50` er den koncentration, hvor kurven ligger halvvejs mellem `Bottom` og `Top`, og `Hill` (Hill-koefficienten) beskriver, hvor stejlt kurven stiger. En Hill-koefficient på 1 er det klassiske udgangspunkt, men til dette datasæt skal I måske bruge en stejlere hældning (Hill > 1). I dette tilfælde vil `y` og `x` være henholdsvis hæmolysegraden og koncentrationen.
 
 I skal selv give `nls()` fornuftige startgæt for parametrene via `start = list(...)`, så den har et sted at begynde søgningen.
 
@@ -248,17 +248,17 @@ summary(fit_sigmoid)
 EC50 <- ____   # træk EC50 ud af fittet
 ```
 
-> **Hint:** Startgættene behøver ikke være præcise — bare i den rigtige størrelsesorden. `Bottom` og `Top` kan I gætte ud fra jeres data (hvad er hæmolysegraden ved hhv. den laveste og højeste koncentration?), og `EC50` kan gættes til et sted midt i jeres koncentrationsinterval. Med `Hill` skal i nok prøve jer frem, men start med 1 (skal nok være større).
+> **Hint:** Startgættene behøver ikke være præcise — bare i den rigtige størrelsesorden. `Bottom` og `Top` kan I gætte ud fra jeres data (hvad er hæmolysegraden ved hhv. den laveste og højeste koncentration?), og `EC50` kan gættes til et sted midt i jeres koncentrationsinterval. Med `Hill` skal I nok prøve jer frem, men start med 1 (skal nok være større).
 >
-> `coef()` virker på et `nls()`-fit på samme måde som på et `lm()`-fit — men her har koefficienterne navne i stedet for at være skæring/hældning, så I kan hente `EC50` med `coef(fit_sigmoid)[["EC50"]]`.Det vil dog også være relevant at angive `Top`, `Bottom` og `Hill` værdien, hvis fittet inkluderes i rapporten.
+> `coef()` virker på et `nls()`-fit på samme måde som på et `lm()`-fit — men her har koefficienterne navne i stedet for at være skæring/hældning, så I kan hente `EC50` med `coef(fit_sigmoid)[["EC50"]]`. Det vil dog også være relevant at angive `Top`, `Bottom` og `Hill` værdien, hvis fittet inkluderes i rapporten.
 
 ## Tegn den fittede kurve på plottet
 
-En sigmoid kurve kan ikke tegnes med `geom_smooth(method = "lm")`. I stedet beregner I selv kurvens punkter over et fint gitter af x-værdier med `predict()`, og tegner dem med `geom_line(data = sigmoid_kurve)`. Tilføj dette til jeres forrige kurve med hæmolyse som funktion af konc. af benzylalkohol. Her giver det også mening at tilføje `scale_x_log10()`, for at få en logaritmisk x-akse. I can stadig justerer akserne ved brug `limits` argumentet. 
+En sigmoid kurve kan ikke tegnes med `geom_smooth(method = "lm")`. I stedet beregner I selv kurvens punkter over et fint gitter af x-værdier med `predict()`, og tegner dem med `geom_line(data = sigmoid_kurve)`. Tilføj dette til jeres forrige kurve med hæmolyse som funktion af konc. af benzylalkohol. Her giver det også mening at tilføje `scale_x_log10()`, for at få en logaritmisk x-akse. I kan stadig justerer akserne ved brug af `limits` argumentet. 
 
 ```{r}
 sigmoid_kurve <- tibble(
-  konc_mM = seq(____, ____, length.out = 200)   # angiv hvilke koncentrationer gurven skal gå fra
+  konc_mM = seq(____, ____, length.out = 200)   # angiv hvilke koncentrationer kurven skal gå fra
 ) %>%
   mutate(
     haemolyse_pct = predict(fit_sigmoid, newdata = .) # fittet bruges til at forudsige y-værdier 

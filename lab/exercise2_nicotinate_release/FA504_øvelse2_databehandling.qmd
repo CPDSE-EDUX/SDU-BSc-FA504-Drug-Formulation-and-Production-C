@@ -25,11 +25,11 @@ Dette dokument guider dig igennem dataanalysen for in vitro-afgiftsforsøget med
 1.  Indlæse det samlede datasæt for alle ni præparater
 2.  Beregne koncentration ud fra A263 og kvadratroden af tiden (Higuchi-kinetik: $Q$ er lineær i $\sqrt{t}$, ikke i $t$)
 3.  Beregne den kumulative afgivne mængde pr. arealenhed ($Q$) — for hvert præparat for sig
-5.  Lave en lineær regression ($Q$ mod $\sqrt{t}$) for hvert af de ni præparater
-6.  Lave de tre plots, rapporten kræver, ved at filtrere det samlede datasæt på forskellige måder
-7.  Samle alle ni $k$-værdier i én tabel
+4.  Lave en lineær regression ($Q$ mod $\sqrt{t}$) for hvert af de ni præparater
+5.  Lave de tre plots, rapporten kræver, ved at filtrere det samlede datasæt på forskellige måder
+6.  Samle alle ni $k$-værdier i én tabel
 
-## Forskelle fra Caco-2 databehandling (e-time 2) {.unnumbered}
+## Forskelle fra Caco-2 databehandling {.unnumbered}
 
 -   I har **ni datasæt** (præparater) i stedet for ét. Det betyder, at den kumulative korrektion for prøveudtagning skal beregnes *for hvert præparat for sig* — ikke hen over hele datasættet.
 -   Sammenhængen er lineær i $\sqrt{t}$ (Higuchi-kinetik), ikke i $t$ selv.
@@ -61,7 +61,7 @@ $Q$ findes derefter som $M/\text{areal}$.
 -   `FF` — fortyndingsfaktor (husk: præparat 3 kræver ikke fortynding, dvs. FF = 1)
 -   `diameter_cm` — den målte diameter af dialysecellens salvereservoir
 -   `Vt_mL` — det målte volumen i "det store rum" af dialysecellen
--   `eps263` — ekstinktionskoefficienten for det pågældende stof (se tabellen ovenfor)
+-   `eps263` — ekstinktionskoefficienten for det pågældende stof
 
 ------------------------------------------------------------------------
 
@@ -116,7 +116,7 @@ Brug @eq-cumulative til at beregne $M_t$, og derefter $Q = M/\text{areal}$. Da I
 data <- data %>%
   group_by(praeparat) %>%
   mutate(
-    M = ____,   # afgivet mængde over membran, µmol (se ligning 2 + e-time 2)
+    M = ____,   # afgivet mængde over membran, µmol (se ligning 2 + Caco-2 permeabilitet e-time)
     Q = ____    # M divideret med præparatets areal, µmol/cm^2 
   ) %>%
   ungroup()
@@ -186,7 +186,7 @@ data %>%
 
 # Saml resultaterne
 
-I `regression`-tabellen fra regressionsafsnittet har I allerede det, I skal bruge til den afsluttende oversigt over $k$-værdier: én række per præparat, med tilørende `k` værdier.
+I `regression`-tabellen fra regressionsafsnittet har I allerede det, I skal bruge til den afsluttende oversigt over $k$-værdier: én række per præparat, med tilhørende `k` værdier.
 
 > **Hint:** Grupperer I efter `praeparat, stof, formulering` (i stedet for kun `praeparat`) i regressionsafsnittet, følger `stof` og `formulering` automatisk med ud i `regression` — I skal ikke selv taste dem ind igen.
 
@@ -194,7 +194,7 @@ I `regression`-tabellen fra regressionsafsnittet har I allerede det, I skal brug
 
 ```{r}
 k_oversigt <- regression %>%
-  select(____) %>%   # behold kun de kolonner, I vil have med i den endelige tabel
+  select(____)   # behold kun de kolonner, I vil have med i den endelige tabel
 ```
 
 > **Opgave:** Overvej, hvordan I bedst formidler regressionsligningerne (skæring, hældning, R²) for alle ni præparater i rapporten — fx i figurteksterne for de tre plots, eller som en samlet tabel i bilag.

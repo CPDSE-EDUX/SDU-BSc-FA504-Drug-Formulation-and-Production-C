@@ -24,7 +24,7 @@ options(OutDec = ",")
 
 ## Introduktion
 
-Quarto er et værktøj, der gør det muligt at samle tekst, billeder, tabeller, figurer og R-kode i ét dokument og derefter "rendere" det til et færdigt dokument. I dette tilfælde er det et Word-dokument (.docx), som I skal afleverer jeres labrapport i. Læs mere om Quarto [her](https://quarto.org/docs/guide/).
+Quarto er et værktøj, der gør det muligt at samle tekst, billeder, tabeller, figurer og R-kode i ét dokument og derefter "rendere" det til et færdigt dokument. I dette tilfælde er det et Word-dokument (.docx), som I skal aflevere jeres labrapport i. Læs mere om Quarto [her](https://quarto.org/docs/guide/).
 
 RStudio har to måder at redigere en qmd-fil i:
 
@@ -35,7 +35,7 @@ Du skifter mellem de to via knapperne i øverste venstre hjørne af dokumentet.
 
 ## Mappestruktur og projektopsætning
 
-Det kan være fordel at starte med at lave et R-projekt for hver rapport/labøvelse, hvor I får defineret en projektmappe. Projektmappen skal gerne komme til at indholde følgende filer:
+Det kan være en fordel at starte med at lave et R-projekt for hver rapport/labøvelse, hvor I får defineret en projektmappe. Projektmappen skal gerne komme til at indeholde følgende filer:
 
 ```         
 øvelse_X/
@@ -50,7 +50,7 @@ Det kan være fordel at starte med at lave et R-projekt for hver rapport/labøve
 
 **vancouver.csl** og **reference.docx** udleveres af os og skal ligge i samme mappe som din rapport.qmd-fil. Du skal **ikke omdøbe eller flytte** disse filer, de er allerede koblet til din rapport via YAML-headeren (mere om det i næste afsnit). Kort om hvad de gør:
 
--   `reference.docx` — en Word-skabelon, der bestemmer, hvordan dit rapporterede dokument ser ud (skrifttype, marginer, overskriftsformatering osv.), når det renderes til Word. Det er denne fil, der styrer udseendet, ikke noget du selv skal formatere i Word bagefter.
+-   `reference.docx` — en Word-skabelon, der bestemmer, hvordan dit renderede dokument ser ud (skrifttype, marginer, overskriftsformatering osv.), når det renderes til Word. Det er denne fil, der styrer udseendet, ikke noget du selv skal formatere i Word bagefter.
 -   `vancouver.csl` — bestemmer, hvordan dine kildehenvisninger og litteraturliste formateres (Vancouver-stilen).
 -   `references.bib` — selve filen, hvor dine kildehenvisninger gemmes. Den udfyldes automatisk, når du tilføjer citationer via Zotero (se afsnittet om referencer nedenfor).
 
@@ -58,7 +58,7 @@ Opret en mappe kaldet `figurer` og læg alle dine billeder og figurer der, så e
 
 ## YAML-header
 
-YAML-headeren ligger i toppen af din qmd-fil mellem to linjer med `---` og bestemmer dokumentets opsætning. I jeres skabelon ser i fx:
+YAML-headeren ligger i toppen af din qmd-fil mellem to linjer med `---` og bestemmer dokumentets opsætning. I jeres skabelon ser I fx:
 
 ```         
 ---
@@ -93,7 +93,7 @@ YAML er meget følsom for mellemrum og indrykning. Hvis rendering pludselig fejl
 
 ## Markdown
 
-I et Quarto-dokument formaters teksten ved at skrive Markdown tekst (i **Source editor** i RStudio). Man kan også formatere teksten ved brug af **Visual editor**. Her er en kort oversigt til hvordan man skriver Markdown tekst (læs også mere [her](https://quarto.org/docs/authoring/markdown-basics.html)):
+I et Quarto-dokument formateres teksten ved at skrive Markdown tekst (i **Source editor** i RStudio). Man kan også formatere teksten ved brug af **Visual editor**. Her er en kort oversigt over hvordan man skriver Markdown tekst (læs også mere [her](https://quarto.org/docs/authoring/markdown-basics.html)):
 
 | Du skriver       | Resultat                                              |
 |------------------|-------------------------------------------------------|
@@ -142,7 +142,7 @@ Indsæt et billede med følgende syntaks:
 
 Du refererer til billedet i din løbende tekst med `@fig-mitbillede`, hvilket f.eks. giver "Figur 1" eller "se Figur 1" afhængigt af, hvordan du formulerer det.
 
-Læs mere om hvordan du indsætter og formatere billeder [her](https://quarto.org/docs/authoring/figures.html).
+Læs mere om hvordan du indsætter og formaterer billeder [her](https://quarto.org/docs/authoring/figures.html).
 
 ## Tabeller
 
@@ -151,24 +151,24 @@ Læs mere om hvordan du indsætter og formatere billeder [her](https://quarto.or
 Dette er et eksempel på hvordan man manuelt kan lave en tabel i sit Quarto dokument (i **Source editor**).
 
 ```         
-| Batch | Osmolaritet (mOsm/kg) | pH  |
+| Batch | Osmolalitet (mOsm/kg) | pH  |
 |-------|-----------------------|-----|
 | A     | 295                   | 7,2 |
 | B     | 310                   | 7,0 |
 | C     | 288                   | 7,4 |
 
-: Måling af osmolaritet og pH for tre batches af øjendråber. {#tbl-ojendraaber-manuel}
+: Måling af osmolalitet og pH for tre batches af øjendråber. {#tbl-ojendraaber-manuel}
 ```
 
 Resultatet:
 
-| Batch | Osmolaritet (mOsm/kg) | pH  |
+| Batch | Osmolalitet (mOsm/kg) | pH  |
 |-------|-----------------------|-----|
 | A     | 295                   | 7,2 |
 | B     | 310                   | 7,0 |
 | C     | 288                   | 7,4 |
 
-: Måling af osmolaritet og pH for tre batches af øjendråber. {#tbl-ojendraaber-manuel}
+: Måling af osmolalitet og pH for tre batches af øjendråber. {#tbl-ojendraaber-manuel}
 
 Det kan måske nogle gange være nemmere at formatere tabeller ved brug af **Visual editor**. Læs mere [her](https://quarto.org/docs/authoring/tables.html#disabling-quarto-table-processing) for et mere dybdegående indblik i hvordan tabeller formateres.
 
@@ -180,21 +180,21 @@ Hvis I har data i R, kan I generere en tabel automatisk med `kable()` fra `knitr
 
 ```{r}
 #| label: tbl-ojendraaber-data
-#| tbl-cap: "Måling af osmolaritet og pH for tre batches af øjendråber."
+#| tbl-cap: "Måling af osmolalitet og pH for tre batches af øjendråber."
 #| echo: false
 
 library(knitr)
 
 data <- tibble(
   Batch = c("A", "B", "C"),
-  Osmolaritet_mOsm_kg = c(295, 310, 288),
+  osmolalitet_mOsm_kg = c(295, 310, 288),
   pH = c(7.2, 7.0, 7.4)
 )
 
-kable(data, col.names = c("Batch", "Osmolaritet (mOsm/kg)", "pH"), align = "c")
+kable(data, col.names = c("Batch", "osmolalitet (mOsm/kg)", "pH"), align = "c")
 ```
 
-Bemærk `#| label:` og `#| tbl-cap:` i toppen af kodeblokken. Det er det, der  henholdsvis gør tabellen referérbar med `@tbl-ojendraaber-data` og giver dne en tabeltekst.
+Bemærk `#| label:` og `#| tbl-cap:` i toppen af kodeblokken. Det er det, der  henholdsvis gør tabellen referérbar med `@tbl-ojendraaber-data` og giver den en tabeltekst.
 
 ## Figurer (plots)
 
@@ -204,20 +204,20 @@ Plots indsættes på en lignende måde som tabeller, via en kodeblok med et labe
 
 ```{r}
 #| label: fig-hematokrit
-#| fig-cap: "Hæmatokrit som funktion af osmolaritet."
+#| fig-cap: "Hæmatokrit som funktion af osmolalitet."
 #| out-width: "80%"
 #| echo: false
 
 library(ggplot2)
 
-osmolaritet <- c(200, 250, 300, 350, 400, 450, 500)
+osmolalitet <- c(200, 250, 300, 350, 400, 450, 500)
 haematokrit <- c(45, 44, 42, 42, 41, 41, 40)
-df <- data.frame(osmolaritet, haematokrit)
+df <- data.frame(osmolalitet, haematokrit)
 
-ggplot(df, aes(x = osmolaritet, y = haematokrit)) +
+ggplot(df, aes(x = osmolalitet, y = haematokrit)) +
   geom_point(color = "steelblue", size = 3) +
   geom_line(color = "steelblue") +
-  labs(x = "Osmolaritet (mOsm/kg)", y = "Hæmatokrit (%)") +
+  labs(x = "osmolalitet (mOsm/kg)", y = "Hæmatokrit (%)") +
   theme_classic()
 ```
 
@@ -298,7 +298,7 @@ Quarto tilføjer automatisk kildens fulde reference til `references.bib` og inds
 
 ### Litteraturliste
 
-Litteraturlisten genereres automatisk i slutningen af dokumentet. Man kan også manualt angive hvor litteraturlisten skal være ved at indsætte følgende i Quarto-filen:
+Litteraturlisten genereres automatisk i slutningen af dokumentet. Man kan også manuelt angive hvor litteraturlisten skal være ved at indsætte følgende i Quarto-filen:
 
 ```         
 ## Referencer
@@ -311,4 +311,4 @@ Alle citerede kilder vil derefter automatisk blive listet under denne sektion me
 
 ## Rendering til Word
 
-Når rapporten er klar (eller I bare vil se, hvordan den ser ud undervejs), klikker i på **Render** knappen foroven. Det færdige .docx-dokument gemmes i samme mappe som din qmd-fil. Det er en god idé at rendere undervejs i skriveprocessen, så fanger I tidligt, hvis et billede, en label eller en citation ikke virker som forventet.
+Når rapporten er klar (eller I bare vil se, hvordan den ser ud undervejs), klikker I på **Render** knappen foroven. Det færdige .docx-dokument gemmes i samme mappe som din qmd-fil. Det er en god idé at rendere undervejs i skriveprocessen, så fanger I tidligt, hvis et billede, en label eller en citation ikke virker som forventet.

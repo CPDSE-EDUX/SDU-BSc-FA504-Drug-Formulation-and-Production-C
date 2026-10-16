@@ -1,5 +1,5 @@
 ---
-title: "FA504: Titel på laboratorieøvelse"              # Skriv titlen på labøvlesen her
+title: "FA504: Titel på laboratorieøvelse"              # Skriv titlen på labøvelesen her
 subtitle: "HX | Gruppe X+X | Øvelse udført: DD/MM-YYYY" # Tilføj hold nr. + gruppe nr. + dato for øvelse 
 author:
   - name: "Fulde navn (SDU brugernavn)"                 # Udfyld med jeres navne + SDU brugernavn
@@ -8,7 +8,7 @@ author:
   - name: "Fulde navn (SDU brugernavn)"
   - name: "Fulde navn (SDU brugernavn)"
   
-# Nedenstående indstllinger skal I ikke redigere
+# Nedenstående indstillinger skal I ikke redigere
 date: today                       # Sætter dato til dags dato ved render 
 date-format: "DD/MM-YYYY"         # Bestemmer dato format
 format:
@@ -70,7 +70,7 @@ options(OutDec = ",") # Sætter komma som decimalseparator for kodeoutput (tabel
 
 ## Databehandling
 
-<!-- Gennemgå relevante formler/beregninger samt beregningseksempler der er blevet anvendt til at analysere jeres data. Dette skal ikke vises som R kode, men som formler der beskriver databehandlingen. I kan også bruge dette afsnit til at skrive al jeres kode der lave databehandlingen, men denne ville ikke blive vist i det endelige dokument -->
+<!-- Gennemgå relevante formler/beregninger samt beregningseksempler der er blevet anvendt til at analysere jeres data. Dette skal ikke vises som R kode, men som formler der beskriver databehandlingen. I kan også bruge dette afsnit til at skrive al jeres kode der laver databehandlingen, men den vil ikke blive vist i det endelige dokument -->
 
 ```{r}
 # DATABEHANDLING: I kan bruge denne kodeblok til at udføre jeres databehandling, som sker i baggrunden
@@ -89,7 +89,7 @@ options(OutDec = ",") # Sætter komma som decimalseparator for kodeoutput (tabel
 
 # Konklusion
 
-<!-- En kort konklusion, der opsumerer hvad der er blevet gjort og hvad man fandt ud af. OBS! Diskussionsafsnittet + konklusion må højst fylde 2 sider i renderet Word dokument. -->
+<!-- En kort konklusion, der opsummerer hvad der er blevet gjort og hvad man fandt ud af. OBS! Diskussionsafsnittet + konklusion må højst fylde 2 sider i renderet Word dokument. -->
 
 # Referencer
 

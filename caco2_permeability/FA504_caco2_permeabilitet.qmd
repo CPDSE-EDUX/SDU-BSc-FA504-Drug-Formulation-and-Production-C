@@ -32,7 +32,7 @@ I dette forsøg tilsættes lægemiddelstofkandidaten **X** til den **apikale (do
 
 ## Relevans og perspektiver{.unnumbered}
 
-Denne dataanalyse bygger på bl.a. på lineær regression, samt andre relevante framgangsmåder I vil møde gentagne gange:
+Denne dataanalyse bygger bl.a. på lineær regression, samt andre relevante fremgangsmåder I vil møde gentagne gange:
 
 - I har tidligere arbejdet med en tilsvarende fremgangsmåde ved analyse af dissolutionforsøg (FA503)
 - Labøvelse 2 (*In vitro afgivelse af nikotinsyreestre fra forskellige salvegrundlag*) har samme analytiske tilgang og R-arbejdsgang, men regression mod √t (Higuchi-kinetik)
@@ -50,11 +50,11 @@ Derudover er *P~app~* en central parameter i lægemiddeludvikling og -klassifice
 
 Transportforsøg foregår i brønde med celler udsået på en permeabel membran, se @fig-caco2.
 
-![Transwellsystem med Caco-2 celler. Øverste kammer er apikalt og nederste basolateralt. Apikal volumen = 0,5 ml, Basolateral volumen = 1,0 ml. Prøvevolumen, receiver prøve (basolateral) = 100 μl. Prøvevolumen, donor opløsning (apical) = 20 μl. Areal = 1,12 cm^2^.](caco2.png){#fig-caco2 width=40%}
+![Transwellsystem med Caco-2 celler. Øverste kammer er apikalt og nederste basolateralt. Apikal volumen = 0,5 ml, Basolateral volumen = 1,0 ml. Prøvevolumen, receiver prøve (basolateral) = 100 μl. Prøvevolumen, donor opløsning (apikal) = 20 μl. Areal = 1,12 cm^2^.](caco2.png){#fig-caco2 width=40%}
 
-Apikal til basolateral (equivalent til lumen-blod) flux, J^l-b^, for en lægemiddelstofkandidat, **X**, er undersøgt ved transportstudier over 21 dage gamle Caco-2 celle monolag, som vist i @fig-caco2. **X** er blevet tilsat til den apikale (luminale) side i en koncentration på **50 mM**. Der er udtaget prøver på acceptor (receiver) siden hvert 15 min, og mængden af **X** er blevet bestemt. Til start og slut er der udtaget en prøve fra donoropløsningen som er blevet kvantificeret for indholdet af **X** (50 mM ved start, 48 mM ved slut). Data kan findes i filen `caco2_data.xlsx`.
+Apikal til basolateral (ækvivalent til lumen-blod) flux, J^l-b^, for en lægemiddelstofkandidat, **X**, er undersøgt ved transportstudier over 21 dage gamle Caco-2 celle monolag, som vist i @fig-caco2. **X** er blevet tilsat til den apikale (luminale) side i en koncentration på **50 mM**. Der er udtaget prøver på acceptor (receiver) siden hvert 15 min, og mængden af **X** er blevet bestemt. Til start og slut er der udtaget en prøve fra donoropløsningen som er blevet kvantificeret for indholdet af **X** (50 mM ved start, 48 mM ved slut). Data kan findes i filen `caco2_data.xlsx`.
 
-**Eksperimentalle parametre:** Forsøget er lavet med omrøring. Apikal volumen = 0,5 ml. Basolateral volumen = 1,0 ml. Prøve volumen, receiver opløsning (basolateral) = 100 μl. Prøve volumen, donor opløsning (apical) = 20 μl. Areal af Caco-2 cellemonolag = 1,12 cm^2^. Donorprøver er ikke erstattet med ny opløsning, men prøver udtaget på receiver siden er blevet erstattet med frisk buffer som ikke indeholder **X**, hvormed volumen i systemet er konstante over forsøget.
+**Eksperimentelle parametre:** Forsøget er lavet med omrøring. Apikal volumen = 0,5 ml. Basolateral volumen = 1,0 ml. Prøve volumen, receiver opløsning (basolateral) = 100 μl. Prøve volumen, donor opløsning (apikal) = 20 μl. Areal af Caco-2 cellemonolag = 1,12 cm^2^. Donorprøver er ikke erstattet med ny opløsning, men prøver udtaget på receiver siden er blevet erstattet med frisk buffer som ikke indeholder **X**, hvormed volumen i systemet er konstant over forsøget.
 
 # Opsætning
 
@@ -100,7 +100,7 @@ data <- ___ # importer data
 
 ## Mængde i hver receiver-prøve
 
-Ved hvert tidspunkt udtages en prøve med volumen $V_s$ fra receiver-kammeret. Brug `mutate()` funktionen til at oprette en kolonne (`n_sample_nmol`) i dit dataframe, der udregner mængden af **X** i hver prøve (i nmol). Husk, at `mutate()` funktionen bruges ved at refere til kolonnenavne og variabelnavne, for automatisk at udregne værdier for hver række (læs evt. mere om `mutate()`: [her](https://cpdse-edux.github.io/R_documentation/functions/mutate.html) eller [her](https://dplyr.tidyverse.org/reference/mutate.html)).
+Ved hvert tidspunkt udtages en prøve med volumen $V_s$ fra receiver-kammeret. Brug `mutate()` funktionen til at oprette en kolonne (`n_sample_nmol`) i dit dataframe, der udregner mængden af **X** i hver prøve (i nmol). Husk, at `mutate()` funktionen bruges ved at referere til kolonnenavne og variabelnavne, for automatisk at udregne værdier for hver række (læs evt. mere om `mutate()`: [her](https://cpdse-edux.github.io/R_documentation/functions/mutate.html) eller [her](https://dplyr.tidyverse.org/reference/mutate.html)).
 
 ```{r}
 data <- data %>%
@@ -111,7 +111,7 @@ data <- data %>%
 
 ## Kumulativ transporteret mængde — korrektion for prøveudtagning
 
-For at bestemme den totale mængde af **X**, som er transporteret over Caco-2 cellelaget, skal der tages højde for de udtagne prøver, som efterfølgende erstates af ren buffer. Dvs. at volumenet i receiverkammeret (`V_r`) forbliver konstant, men en større og større mængde af **X** bliver fjernet fra systemet i form af de udtagne prøver. Altså udgøres den totale mængde af transportet **X**, til et givent tidspunkt, af både mængden af **X** i receiveerkammeret + den kumulative sum af **X** i de forrige prøver:
+For at bestemme den totale mængde af **X**, som er transporteret over Caco-2 cellelaget, skal der tages højde for de udtagne prøver, som efterfølgende erstattes af ren buffer. Dvs. at volumenet i receiverkammeret (`V_r`) forbliver konstant, men en større og større mængde af **X** bliver fjernet fra systemet i form af de udtagne prøver. Altså udgøres den totale mængde af transporteret **X**, til et givent tidspunkt, af både mængden af **X** i receiverkammeret + den kumulative sum af **X** i de forrige prøver:
 
 $$n_{total,t} = C_{t} \cdot V_r  + \sum_{i<t} n_{sample,i}$$
 
@@ -172,7 +172,7 @@ _____
 
 ## Udvælg steady-state-data
 
-Baseret på visuel inspektion filtreres data til kun at inkludere steady-state-området og gemmes som en ny dataframe `ss_data`. Funktionen `filter()` kan bruges til at udvælge rækker i en dataframe, der opfylder et bestemt betingelse (se evt. mere [her](https://dplyr.tidyverse.org/reference/filter.html)).
+Baseret på visuel inspektion filtreres data til kun at inkludere steady-state-området og gemmes som en ny dataframe `ss_data`. Funktionen `filter()` kan bruges til at udvælge rækker i en dataframe, der opfylder en bestemt betingelse (se evt. mere [her](https://dplyr.tidyverse.org/reference/filter.html)).
 
 ```{r}
 ss_data <- data %>% 
@@ -195,7 +195,7 @@ summary(fit)
 Udtræk skæringspunkt og hældning med `coef()`:
 
 -   `coef(fit)[[1]]` — **skæringspunktet** (nmol)
--   `coef(fit)[[2]}` — **hældningen** (nmol/min)
+-   `coef(fit)[[2]]` — **hældningen** (nmol/min)
 
 ```{r}
 skæring <- ____
@@ -246,7 +246,7 @@ Papp <- ____              # cm/s
 
 # Opsummering
 
-Følge kode kan bruges til at give en opsummering af de bestemt værdier, når de alle er defineret i R.
+Følgende kode kan bruges til at give en opsummering af de bestemte værdier, når de alle er defineret i R.
 
 ```{r}
 cat("=== Resultater ===

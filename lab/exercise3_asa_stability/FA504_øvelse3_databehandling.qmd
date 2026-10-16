@@ -53,7 +53,7 @@ Forsøget er lavet ved fire temperaturer (55, 60, 65 og 70 °C), med hver sit s�
 
 **Foreslået datastruktur** — saml jeres data i én fil (`øvelse3_data.xlsx`) med kolonnerne:
 
--   `temp_C` — forsøgstemperatur (anvend gennemsnittet af jeres målte tempereturer ved start og slut)
+-   `temp_C` — forsøgstemperatur (anvend gennemsnittet af jeres målte temperaturer ved start og slut)
 -   `tid_min` — prøvetagningstidspunkt i minutter
 -   `A303` — målt absorbans ved 303 nm
 -   `A280` — målt absorbans ved 280 nm
@@ -83,7 +83,7 @@ eps_SA    <- ____   # den relevante ekstinktionskoefficient for SA, L/(mol*cm)
 m_ASA     <- ____    # jeres afvejede masse ASA, mg
 V_stam    <- ____    # volumen ethanol-stamopløsning, mL
 V_udtag   <- ____    # volumen overført fra stamopløsning til saltsyren, mL
-V_reak    <- ____    # toal volumen i reaktionsblandingen med 0,1 M saltsyre, mL
+V_reak    <- ____    # total volumen i reaktionsblandingen med 0,1 M saltsyre, mL
 
 R_gas     <- 8.314   # J/(mol*K), gaskonstanten
 ```
@@ -164,7 +164,7 @@ k_per_temp <- data %>%
 
 ## Plot: Reaktionskinetik ved de fire temperaturer
 
-I rapporten skal i plotte de lineariserede data som funktion af tid for alle fire temperaturer samtidig med tilhørende regressionslinjer. 
+I rapporten skal I plotte de lineariserede data som funktion af tid for alle fire temperaturer samtidig med tilhørende regressionslinjer. 
 
 Brug `ggplot()` med `geom_point()` og `geom_smooth()` (for regressionslinje), og farvelæg punkterne efter temperatur ved at sætte `color = as.factor(temp_C)` inde i `aes()`. Da `temp_C` er numerisk, skal den konverteres til en faktor (`as.factor()`) for at blive farvelagt som fire adskilte grupper i stedet for en kontinuerlig farveskala. Husk at beskrive regressionsforskrifterne og R^2^-værdier i figurteksten.
 
@@ -182,7 +182,7 @@ ggplot(____, aes(x = ____, y = ____, color = ____)) +
 # tilføj gerne flere elementer for at formatere jeres plot (se tips nederst i guiden)
 ```
 
-> **Opgave:** Er sammenhængen mellem $y$ og tid tilnærmelsesvis lineær ved alle fire temperaturer? Ser i en klar sammenhæng mellem linjernes hældning og temperaturen?
+> **Opgave:** Er sammenhængen mellem $y$ og tid tilnærmelsesvis lineær ved alle fire temperaturer? Ser I en klar sammenhæng mellem linjernes hældning og temperaturen?
 
 ## Forbered data til Arrhenius-plottet
 
@@ -195,13 +195,13 @@ k_per_temp <- k_per_temp %>%
   )
 ```
 
-> **OBS**: Husk at I skal bruge de gennemsnitlige temperaturer i målte under forsøget til jeres Arrhenius data.  
+> **OBS**: Husk at I skal bruge de gennemsnitlige temperaturer I målte under forsøget til jeres Arrhenius data.  
 
 ------------------------------------------------------------------------
 
 ## Lineær regression (Arrhenius-ligningen)
 
-Ifølge Arrhenius-ligningen er $\ln k = \ln A - \dfrac{E_a}{R}\cdot\dfrac{1}{T}$. Ud fra denne ligning laves der en lineær regression ved brug af `lm()`. Ud fra dette kan relevante værdier som aktiveringsenergien $E_a$ og frekvensfaktoren $A$. Husk igen at gemme relevante informationer om jeres regression (forskrift, R^2^) til jeres plot
+Ifølge Arrhenius-ligningen er $\ln k = \ln A - \dfrac{E_a}{R}\cdot\dfrac{1}{T}$. Ud fra denne ligning laves der en lineær regression ved brug af `lm()`. Ud fra dette kan relevante værdier som aktiveringsenergien $E_a$ og frekvensfaktoren $A$ bestemmes. Husk igen at gemme relevante informationer om jeres regression (forskrift, R^2^) til jeres plot
 
 ```{r}
 fit_arr <- lm(____)
@@ -216,7 +216,7 @@ A_freq <- ____   # frekvensfaktoren, min^-1
 
 ## Arrhenius plot
 
-I rapporten skal i lave et Arrhenius plot, der viser ovenstående regression. Husk at I altid kan tilføje flere lag og argumenter for at formatere jeres plot (se tips). 
+I rapporten skal I lave et Arrhenius plot, der viser ovenstående regression. Husk at I altid kan tilføje flere lag og argumenter for at formatere jeres plot (se tips). 
 
 ```{r}
 ggplot(____, aes(x = ____, y = ____)) +

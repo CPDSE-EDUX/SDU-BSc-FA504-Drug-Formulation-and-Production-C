@@ -4,8 +4,8 @@ The lab part of FA504 has four exercises. Exercises 1-3 each have a data process
 
 Each folder contains:
 
-* `FA504\\\_øvelseX\\\_databehandling.qmd` / `.html`: the data processing guide (Danish)
-* `øvelseX\\\_data\\\_skabelon.xlsx`: an empty template for entering your own lab data
+* `FA504_øvelseX_databehandling.qmd` / `.html`: the data processing guide (Danish)
+* `øvelseX_data_skabelon.xlsx`: an empty template for entering your own lab data
 
 ## Exercise 1: Osmolytes, erythrocyte volume and hemolysis
 
@@ -15,7 +15,7 @@ R: hematocrit correction for dilution, degree of hemolysis relative to a saponin
 
 ## Exercise 2: In vitro release of nicotinates from semisolid bases
 
-Methyl-, butyl- and hexyl nicotinate are released from four semisolid bases (o/w cream, hydrophobic ointment, hydrophilic ointment, gel), nine preparations in total.
+Methyl-, butyl- and hexyl nicotinate are released from five semisolid bases (o/w cream (water), o/w cream (glycerol), hydrophobic ointment, hydrophilic ointment, gel), nine preparations in total.
 
 R: correction for sample removal (as in the Caco-2 exercise class), and linear regression of the released amount per area (Q) against √t to get the Higuchi release constant for each preparation.
 

@@ -4,7 +4,7 @@ subtitle: "H1 | Gruppe 1+2 | Øvelse udført: 19/06-2026" # Tilføj hold nr. + g
 author:
   - name: "Sebastian Jakobsen (sejak16)" # Udfyld med jeres navne + SDU brugernavn
 
-# Nedenstående indstllinger skal I ikke redigere
+# Nedenstående indstillinger skal I ikke redigere
 date: today                       # Sætter dato til dags dato ved render 
 date-format: "DD/MM-YYYY"         # Bestemmer dato format
 format:
@@ -38,7 +38,7 @@ Sebastian (SJ) stod for teori, dataanalyse, resultatafsnit, og diskussion. AI (i
 ```{r}
 #| label: setup
 
-# SETUP: Denne kodeblok kan evt. bruges til at loade relevante pakker (tidyverse, knitr, etc) eller globale indstillinger.library(tidyverse)
+# SETUP: Denne kodeblok kan evt. bruges til at loade relevante pakker (tidyverse, knitr, etc) eller globale indstillinger.
 library(tidyverse)
 library(readxl)
 library(knitr)
@@ -89,7 +89,7 @@ $$
 n_{total,t} = C_{t} \cdot V_r + \sum_{i<t} n_{prøve,i}
 $$ {#eq-ntotal}
 
-hvor $C_t$ er koncentrationen i receiverkammeret til tiden $t$, $V_r$ er receivervolumet, og $n_{prøve,i}$ er mængden af **X** i de prøver udtaget før tidspunkt $t$. Her gives et regneeksempel efter 45 minutter:
+hvor $C_t$ er koncentrationen i receiverkammeret til tiden $t$, $V_r$ er receivervolumenet, og $n_{prøve,i}$ er mængden af **X** i de prøver udtaget før tidspunkt $t$. Her gives et regneeksempel efter 45 minutter:
 
 $$
 n_{total,t} = 0,26 \, \frac{nmol}{µL} \cdot 1000 \, µL + (3 \, nmol + 12 \, nmol) = 275 \, nmol
@@ -185,9 +185,9 @@ Beregnede værdier fra akkumulationsplottet, såsom lag-tid, flux og permeabilit
 
 <!-- Skal være et sammenhængende afsnit, hvori øvelsens resultater diskuteres i forhold til relevant baggrundsteori og litteratur. Studiespørgsmålene kan ofte (men ikke altid) indgå i dette afsnit. Husk angivelse af referencer. OBS! Diskussionsafsnittet må højst fylde 2 sider i renderet Word dokument. -->
 
-Da kun 5,08 % af **X** blev transporteret over Caco-2-cellemonolaget over forsøgets længde, vurderes sink conditions at være opretholdt. Dette ses også afspejlet i den meget rette linje fra 45 min til 120 min i @fig-transport.
+Da kun 5,18 % af **X** blev transporteret over Caco-2-cellemonolaget over forsøgets længde, vurderes sink conditions at være opretholdt. Dette ses også afspejlet i den meget rette linje fra 45 min til 120 min i @fig-transport.
 
-Den bestemte $P_{app}$ på $4{,}06 \cdot 10^{-6}$ cm/s antyder høj permeabilitet for **X** sammenlignet med referencestoffer med kendt oral absorption [@artursson2001]. Det skal dog bemærkes, at Caco-2-data alene ikke er tilstrækkeligt til at konkludere høj permeabilitet i BCS-sammenhæng. Ifølge ICH M9 bør permeabilitetsklassificering primært baseres på human farmakokinetik, fx absolut biotilgængelighed eller massbalancestudier, og Caco-2-resultater skal altid tolkes i sammenhæng med tilgængelige humane data [@ichm9]. Derudover fremgår det af ICH M9 Annex I, at Caco-2-assayet som udgangspunkt kun kan anvendes til klassificering af stoffer, der transporteres passivt, dvs. uden involvering af aktive transportproteiner. For at understøtte passiv transport bør det demonstreres, at $P_{app}$ er uafhængig af transportretningen, typisk udtrykt som en efflux ratio ($P_{app,BL \rightarrow AP} / P_{app,AP \rightarrow BL}$) under 2 [@ichm9]. I dette forsøg er der ikke udført bidirektionelle transportstudier, og transportmekanismen for **X** er derfor ikke afklaret, hvilket begrænser muligheden for at drage endelige konklusioner om permeabilitetsklasse på baggrund af dette forsøg alene. Derudover skal opløseligheden af **X** også bestemmes for klassificering ift. BCS.
+Den bestemte $P_{app}$ på $4{,}06 \cdot 10^{-6}$ cm/s antyder høj permeabilitet for **X** sammenlignet med referencestoffer med kendt oral absorption [@artursson2001]. Det skal dog bemærkes, at Caco-2-data alene ikke er tilstrækkeligt til at konkludere høj permeabilitet i BCS-sammenhæng. Ifølge ICH M9 bør permeabilitetsklassificering primært baseres på human farmakokinetik, fx absolut biotilgængelighed eller massebalancestudier, og Caco-2-resultater skal altid tolkes i sammenhæng med tilgængelige humane data [@ichm9]. Derudover fremgår det af ICH M9 Annex I, at Caco-2-assayet som udgangspunkt kun kan anvendes til klassificering af stoffer, der transporteres passivt, dvs. uden involvering af aktive transportproteiner. For at understøtte passiv transport bør det demonstreres, at $P_{app}$ er uafhængig af transportretningen, typisk udtrykt som en efflux ratio ($P_{app,BL \rightarrow AP} / P_{app,AP \rightarrow BL}$) under 2 [@ichm9]. I dette forsøg er der ikke udført bidirektionelle transportstudier, og transportmekanismen for **X** er derfor ikke afklaret, hvilket begrænser muligheden for at drage endelige konklusioner om permeabilitetsklasse på baggrund af dette forsøg alene. Derudover skal opløseligheden af **X** også bestemmes for klassificering ift. BCS.
 
 # Konklusion
 
